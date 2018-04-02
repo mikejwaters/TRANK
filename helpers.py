@@ -176,10 +176,10 @@ def error_plot(lamda_list, rms_spectrum,
 	from numpy import array, mean, sqrt
 
 	fig = figure(figsize=(3.2,2.5),dpi = 220*2/3)
-	plot(lamda_list, array(rms_spectrum)*100,marker = 'o', color ='grey' )
+	plot(lamda_list, array(rms_spectrum)*100,marker = 'o',markersize = 2, markerfacecolor = 'None', color ='grey' )
 
 	if len(reducible_error_spectrum) == len(lamda_list):
-		plot(lamda_list, reducible_error_spectrum*100, marker = 'o', color = 'royalblue' )
+		plot(lamda_list, reducible_error_spectrum*100, marker = 'o',markersize = 2, color = 'royalblue' )
 
 	net_rms = sqrt( mean( array(rms_spectrum)**2 ) )
 	axhline(net_rms*100,color='grey',linestyle=':', zorder = 4)

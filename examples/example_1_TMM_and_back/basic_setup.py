@@ -48,7 +48,7 @@ fit_nk_f = nk_f_list[layer_index_of_fit]
 #################  illumination paramters
 
 
-angle_list = [0,20,40,60,80]
+angle_list = [0,80]
 
 tmm_spectra_dir = 'tmm_predicted_spectra/'
 
