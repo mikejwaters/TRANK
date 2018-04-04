@@ -50,7 +50,7 @@ if len(sys.argv)>1:
 
 
 
-from TRANK import single_lamda_rms_error_map, functionize_nk_file, try_mkdir, find_min_indices_2d_array
+from TRANK import single_lamda_rms_error_map, functionize_nk_file, try_mkdir, find_min_indices_2d_array, rms_error_spectrum, extrap
 from numpy import  loadtxt, linspace
 
 data_directory = 'TRANK_nk_fit/'
@@ -61,7 +61,10 @@ fit_nk_f =  functionize_nk_file(data_directory+'fit_nk_fine.txt', skiprows = 0)
 lamda_list = loadtxt(data_directory+'fit_nk.txt' , unpack = True, usecols = [0])
 lamda_fine = loadtxt(data_directory+'fit_nk_fine.txt' , unpack = True, usecols = [0])
 
-
+rms_error_fine = rms_error_spectrum(lamda_list = lamda_fine, nk_f = fit_nk_f,
+									spectrum_list_generator = spectrum_list_generator,
+									parameter_list_generator = parameter_list_generator)
+rms_f = extrap(lamda_fine, rms_error_fine, kind = 'linear')
 
 try_mkdir(map_direct )
 
@@ -138,11 +141,14 @@ for lamda in coarse_lamda_list:
 		cbar.ax.set_ylabel('RMS Error (%)')
 
 	min_indices = find_min_indices_2d_array(error_map)
-	plot(nlist[min_indices[0]], klist[min_indices[1]], marker = 'o', markerfacecolor = 'white',markeredgecolor = 'white', markersize = 3)
+	global_min_rms = error_map[min_indices[0],min_indices[1]]
+	plot(nlist[min_indices[0]], klist[min_indices[1]], marker = 'o', markerfacecolor = 'white',markeredgecolor = 'white',linewidth = 0.0, markersize = 2,  label = 'On Map %.2e %%'%global_min_rms)
 
-	plot(fit_nk_f(lamda).real, fit_nk_f(lamda).imag, marker = '+', markerfacecolor = 'grey',markeredgecolor = 'grey')
+	rms_fit = rms_f(lamda) *100
+	plot(fit_nk_f(lamda).real, fit_nk_f(lamda).imag, marker = '+', markerfacecolor = 'grey',markeredgecolor = 'grey',linewidth = 0.0,  label = 'Fit %.2e %%'%rms_fit)
 
 
+	legend(fontsize = 6, handlelength = 1, handletextpad = 0.2)
 
 	gcf().tight_layout(pad=0.15)
 	savefig(map_direct+'error_map_lamda_%f.pdf'%lamda,dpi = 600, transparent = True)
