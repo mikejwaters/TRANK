@@ -22,9 +22,10 @@ def extrap(lamda, n, kind = 'linear'):
 	return interp1d(lamda, n, kind=kind, bounds_error = False, fill_value = (lower_value, upper_value))
 
 def extrap_c(lamda, nk, kind = 'linear'):
-
-	real_part_f = extrap(lamda, nk.real, kind = kind)
-	imag_part_f = extrap(lamda, nk.imag, kind = kind)
+	from numpy import array
+	nk_array = array(nk)
+	real_part_f = extrap(lamda, nk_array.real, kind = kind)
+	imag_part_f = extrap(lamda, nk_array.imag, kind = kind)
 
 	def my_function(lamda):
 		return real_part_f(lamda) + 1.0j*imag_part_f(lamda)

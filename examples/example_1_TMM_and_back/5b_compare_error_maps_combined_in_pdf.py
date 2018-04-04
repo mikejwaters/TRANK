@@ -38,13 +38,13 @@ def compute_inner_log_levels(error_map, base10delta = 1.0):
 
 
 
-from TRANK import single_lamda_TRA_error_map, functionize_nk_file, try_mkdir, find_min_indices_2d_array
+from TRANK import single_lamda_rms_error_map, functionize_nk_file, try_mkdir, find_min_indices_2d_array
 from numpy import ceil, floor, loadtxt
 
 data_directory = 'TRANK_nk_fit/'
 map_direct = 'TRANK_error_maps/'
 
-from basic_setup  import fit_nk_f, TR_pair_list_generator,   parameter_list_generator
+from basic_setup  import fit_nk_f, spectrum_list_generator,   parameter_list_generator
 fit_nk_f =  functionize_nk_file( data_directory+'fit_nk_fine.txt', skiprows = 0)
 lamda_list = loadtxt(data_directory+'fit_nk.txt' , unpack = True, usecols = [0])
 lamda_fine = loadtxt(data_directory+'fit_nk_fine.txt' , unpack = True, usecols = [0])
@@ -89,7 +89,7 @@ for lamda in coarse_lamda_list:
 	error_map = single_lamda_TRA_error_map(lamda = lamda,
 			nlist = nlist,
 			klist = klist,
-			TR_pair_list_generator = TR_pair_list_generator,
+			spectrum_list_generator = spectrum_list_generator,
 			parameter_list_generator = parameter_list_generator) *100.0
 
 
