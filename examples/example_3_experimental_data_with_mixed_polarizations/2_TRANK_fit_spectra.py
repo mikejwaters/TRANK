@@ -25,7 +25,7 @@ if __name__=='__main__':
 	dlamda_min = 1
 	dlamda_max = 50
 	lamda_min = 300
-	lamda_max = 1200
+	lamda_max = 1000
 	lamda_fine = arange(lamda_min, lamda_max + dlamda_min/2.0 , dlamda_min)
 
 
@@ -91,8 +91,8 @@ if __name__=='__main__':
 				lamda_max = lamda_max,
 				dlamda_min = dlamda_min,
 				dlamda_max = dlamda_max,
-				delta_weight = 0.1, tolerance = 1e-5, interpolation_type = 'cubic',
-				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.002,
+				delta_weight = 0.02, tolerance = 1e-5, interpolation_type = 'cubic',
+				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.001,
 				use_reducible_error = True,
 				method='least_squares',
 				KK_compliant = False,

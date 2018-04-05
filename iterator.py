@@ -18,7 +18,7 @@ def error_adaptive_iterative_fit_spectra(
 			KK_compliant = False,
 			interpolation_type = 'cubic',
 			zero_weight_extra_pass = False, data_directory ='TRANK_nk_fit/', method = 'least_squares', verbose = True,
-			make_plots = True, show_plots = True ):
+			make_plots = True, show_plots = True, nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' ):
 
 
 	from TRANK import (fit_spectra_nk_sqr, fit_spectra_nk_sqr_KK_compliant,
@@ -146,7 +146,7 @@ def error_adaptive_iterative_fit_spectra(
 							show_plots = show_plots )
 
 			nk_fig = nk_plot(lamda_list = lamda_list, lamda_fine = lamda_fine, nkf = fit_nk_f,
-				file_name = data_directory+'TRANK_nk_pass_%i.pdf'% pass_number ,title_string='TRANK Pass %i' % pass_number, show_nodes = True, show_plots = show_plots)
+				file_name = data_directory + nk_spectrum_file_format % pass_number ,title_string='TRANK Pass %i' % pass_number, show_nodes = True, show_plots = show_plots)
 
 			if show_plots:
 				show()
@@ -339,7 +339,7 @@ def error_adaptive_iterative_fit(
 							adaptation_threshold_min = adaptation_threshold_min,
 							adaptation_threshold_max = adaptation_threshold_max,
 							reducible_error_spectrum = reducible_error_spectrum,
-							file_name = data_directory+'rms_spectrum_pass_%i.pdf'% pass_number,
+							file_name = data_directory+ rms_spectrum_file_format % pass_number,
 							title_string = 'Pass %i: Net RMS Error = %.3f %%' %( pass_number, net_rms*100),
 							show_plots = show_plots )
 
