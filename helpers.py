@@ -127,7 +127,7 @@ def nk_plot( nkf, lamda_fine, lamda_list = [], title_string = '', file_name = 'n
 	nax.spines['right'].set_visible(False)
 
 
-	nax.set_title(title_string , fontsize = 8)
+	nax.set_title(title_string , fontsize = 10)
 
 	subplots_adjust(top = 0.99,
 			bottom = 0.18,
@@ -162,6 +162,7 @@ def nk_plot( nkf, lamda_fine, lamda_list = [], title_string = '', file_name = 'n
 def error_plot(lamda_list, rms_spectrum,
 				adaptation_threshold, adaptation_threshold_min, adaptation_threshold_max,
 				reducible_error_spectrum = [],
+				lamda_fine = [], rms_spectrum_fine = [], reducible_error_spectrum_fine = [],
 				title_string = '',
 				file_name = 'error_map.pdf', zoom_window = [], show_plots = False ):
 
@@ -189,7 +190,7 @@ def error_plot(lamda_list, rms_spectrum,
 
 	ylabel('RMS Error (%)', fontsize = 10)
 	xlabel('Wavelength (nm)',fontsize = 10)
-	title(title_string, loc = 'right')
+	title(title_string, loc = 'right', fontsize = 10)
 	minorticks_on()
 	gca().tick_params(axis='both', which='major', labelsize=10)
 
