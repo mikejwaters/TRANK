@@ -22,7 +22,8 @@ film_thickness_list = arange(min_thickness, max_thickness+.0001 , 5)
 
 
 dlamda_min = 1
-dlamda_max = 100
+dlamda_max = 50
+delta_weight = 0.05
 lamda_fine = arange(lamda_min, lamda_max + dlamda_min/2.0 , dlamda_min)
 
 show_plots = False
@@ -48,7 +49,7 @@ if __name__=='__main__':
 
 		#force a fresh start each time
 		def fit_nk_f(lamda): # first guess is the hardest to fit
-			return 0.1+0.0*lamda
+			return 1.0+0.5j+0.0*lamda
 
 		error_adaptive_iterative_fit_spectra(
 					nk_f_guess = fit_nk_f,
@@ -59,7 +60,7 @@ if __name__=='__main__':
 					dlamda_min = dlamda_min,
 					dlamda_max = dlamda_max,
 					max_passes = max_passes,
-					delta_weight = 0.2, tolerance = 1e-5, interpolation_type = 'linear',
+					delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'linear',
 					adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.001,
 					use_reducible_error = True,
 					method='least_squares',

@@ -24,7 +24,7 @@ if __name__=='__main__':
 
 	dlamda_min = 1
 	dlamda_max = 50
-	delta_weight = 0.2
+	delta_weight = 0.05
 	use_reducible_error = True
 	max_passes = 0 # use 0 so that it guesses based on the log2( dlamda_max/ dlamda_min )
 	extra_passes = 0 # this number forces extra masses, even superscedes max_passes
@@ -86,7 +86,7 @@ if __name__=='__main__':
 		fit_nk_f = extrap(lamda_fine, rand_n + 1.0j*rand_k)
 
 		def fit_nk_f(lamda):
-			return 2.0+0.0*lamda
+			return 1.0+0.5j+0.0*lamda
 
 
 
