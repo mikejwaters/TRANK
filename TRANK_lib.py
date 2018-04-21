@@ -14,9 +14,10 @@ def TMM_spectrum_wrapper(nk_fit, lamda, snell_angle_front, layer_index_of_fit,  
 
 	T = tm_polarization_fraction * tm_result['T'] + (1.0-tm_polarization_fraction) * te_result['T']
 	R = tm_polarization_fraction * tm_result['R'] + (1.0-tm_polarization_fraction) * te_result['R']
-	A = 1 - T - R
+
 
 	if callable(spectrum)==False:
+		A = 1 - T - R
 		result_dict = {	'T': T,
 						'R': R,
 						'A': A }
@@ -27,17 +28,6 @@ def TMM_spectrum_wrapper(nk_fit, lamda, snell_angle_front, layer_index_of_fit,  
 	return result
 
 
-def spectrum_TMM_lamda(params): # This has to be at the top level because map is strange and wont pickle onless it is at the top level
-	'''Returns a list of the spectrum values for each single point at a Wavelength'''
-	lamda = params[0]
-	nk    = params[1]
-	parameter_list_generator = params[2]
-
-	list_of_parameters = parameter_list_generator(lamda)
-	spectrum_list = []
-	for parameters in list_of_parameters :
-		spectrum_list.append(  TMM_spectrum_wrapper(nk_fit = nk,  **parameters) )
-	return spectrum_list
 
 
 def spectrum_lamda_error(params): # This has to be at the top level because map is strange and wont pickle onless it is at the top level
@@ -68,19 +58,7 @@ def spectrum_lamda_error(params): # This has to be at the top level because map 
 	return sub_error_list
 
 
-def TMM_spectra(lamda_list, nk_f,  parameter_list_generator):
-	''''''
-	#returns data in block like spectra[lamda][ spectrum] there are computational reasons why this order is this way
-	muh_inputs = []
-	for lamda in lamda_list:
-		muh_inputs.append( (lamda, nk_f(lamda), parameter_list_generator ) )
 
-	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
-	spectra = my_pool.map(spectrum_TMM_lamda, muh_inputs)
-	my_pool.terminate()
-	#
-	return spectra
 
 
 
@@ -220,6 +198,32 @@ def single_lamda_rms_error_map(lamda, nlist, klist, spectrum_list_generator, par
 	return error_map #[nindex,kindex]
 
 
+def spectrum_TMM_lamda(params): # This has to be at the top level because map is strange and wont pickle onless it is at the top level
+	'''Returns a list of the spectrum values for each single point at a Wavelength'''
+	lamda = params[0]
+	nk    = params[1]
+	parameter_list_generator = params[2]
+
+	list_of_parameters = parameter_list_generator(lamda)
+	spectrum_list = []
+	for parameters in list_of_parameters :
+		spectrum_list.append(  TMM_spectrum_wrapper(nk_fit = nk,  **parameters) )
+	return spectrum_list
+
+
+def TMM_spectra(lamda_list, nk_f,  parameter_list_generator):
+	''''''
+	#returns data in block like spectra[lamda][ spectrum] there are computational reasons why this order is this way
+	muh_inputs = []
+	for lamda in lamda_list:
+		muh_inputs.append( (lamda, nk_f(lamda), parameter_list_generator ) )
+
+	from multiprocessing import Pool, cpu_count
+	my_pool = Pool(cpu_count())
+	spectra = my_pool.map(spectrum_TMM_lamda, muh_inputs)
+	my_pool.terminate()
+	#
+	return spectra
 
 ###################
 def fit_spectra_nk_sqr(lamda_list, spectrum_list_generator, parameter_list_generator,  nk_f_guess, delta_weight = 0.1, tolerance = 1e-4, no_negative = True, interpolation_type = 'cubic', method = 'least_squares'):

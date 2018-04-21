@@ -16,21 +16,27 @@ def try_mkdir(direct):
 
 
 def extrap(lamda, n, kind = 'linear'):
+	'''Requires that lamda be in increasing order'''
 	upper_value = n[-1]
 	lower_value = n[0]
 	from scipy.interpolate import interp1d
-	return interp1d(lamda, n, kind=kind, bounds_error = False, fill_value = (lower_value, upper_value))
+	interp1d.upper_bound = 0.0
+	interp1d.lower_bound = 0.0
+	def is_in_bounds(self,lamda):
+		if (self.lower_bound <= lamda) and (lamda <= self.upper_bound):
+			return True
+		else:
+			return False
+	interp1d.is_in_bounds = is_in_bounds
+	# now we instantiate
+	func = interp1d(lamda, n, kind=kind, bounds_error = False, fill_value = (lower_value, upper_value))
+	func.upper_bound = max(lamda)
+	func.lower_bound = min(lamda)
+	return func
 
 def extrap_c(lamda, nk, kind = 'linear'):
-	from numpy import array
-	nk_array = array(nk)
-	real_part_f = extrap(lamda, nk_array.real, kind = kind)
-	imag_part_f = extrap(lamda, nk_array.imag, kind = kind)
-
-	def my_function(lamda):
-		return real_part_f(lamda) + 1.0j*imag_part_f(lamda)
-
-	return my_function
+	'''This is deprecated, old versions interp1d didn't always play nice with complex values and extrap is now the backend'''
+	return extrap(lamda = lamda, n = nk, kind = kind)
 
 
 def functionize_nk_file(file_name, skiprows = 0, kind = 'linear'):
@@ -178,10 +184,18 @@ def error_plot(lamda_list, rms_spectrum,
 	from numpy import array, mean, sqrt
 
 	fig = figure(figsize=(3.2,2.5),dpi = 220*2/3)
-	plot(lamda_list, array(rms_spectrum)*100,marker = 'o',markersize = 2, markerfacecolor = 'None', color ='grey' )
+	if len(rms_spectrum_fine)!=0:
+		plot(lamda_fine, array(rms_spectrum_fine)*100,  color ='grey' )
+		plot(lamda_list, array(rms_spectrum)*100,marker = 'o',markersize = 2, markerfacecolor = 'None', color ='grey', linestyle = '' )
+	else:
+		plot(lamda_list, array(rms_spectrum)*100,marker = 'o',markersize = 2, markerfacecolor = 'None', color ='grey', linestyle = '-' )
 
-	if len(reducible_error_spectrum) == len(lamda_list):
-		plot(lamda_list, reducible_error_spectrum*100, marker = 'o',markersize = 2, color = 'royalblue' )
+	if len(reducible_error_spectrum) != 0 : # check that it isn't null
+		if len(reducible_error_spectrum_fine) != 0 : # lamda_fine can be null too...
+			plot(lamda_fine, array(reducible_error_spectrum_fine)*100, color = 'royalblue' )
+			plot(lamda_list, array(reducible_error_spectrum)*100, marker = 'o',markersize = 2, color = 'royalblue', linestyle = '' )
+		else:
+			plot(lamda_list, array(reducible_error_spectrum)*100, marker = 'o',markersize = 2, color = 'royalblue', linestyle = '-' )
 
 	net_rms = sqrt( mean( array(rms_spectrum)**2 ) )
 	axhline(net_rms*100,color='grey',linestyle=':', zorder = 4)
@@ -206,6 +220,7 @@ def error_plot(lamda_list, rms_spectrum,
 		gca().set_xlim(min(lamda_list),max(lamda_list))
 	else:
 		gca().set_xlim(zoom_window[0],zoom_window[1])
+
 	gcf().tight_layout(pad=0.1)
 	savefig(file_name ,dpi=600, transparent = True)
 

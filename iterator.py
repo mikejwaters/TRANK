@@ -12,6 +12,7 @@ def error_adaptive_iterative_fit_spectra(
 			delta_weight = 0.1, tolerance = 1e-5,
 			adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.0005,
 			max_passes = 0,
+			extra_passes = 0,
 			lamda_list = [],
 			use_reducible_error = True,
 			reuse_mode = False,
@@ -61,7 +62,7 @@ def error_adaptive_iterative_fit_spectra(
 			passes = int(max_passes)
 
 
-
+	passes += extra_passes
 	if zero_weight_extra_pass: # this will fail if the num new points conidtion is met
 		passes+=1
 
@@ -210,6 +211,7 @@ def error_adaptive_iterative_fit(
 			delta_weight = 0.1, tolerance = 1e-5,
 			adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.0005,
 			max_passes = 0,
+			extra_passes = 0,
 			lamda_list = [],
 			use_reducible_error = True,
 			reuse_mode = False,
