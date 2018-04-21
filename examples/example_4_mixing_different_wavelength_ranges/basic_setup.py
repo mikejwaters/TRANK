@@ -28,7 +28,7 @@ thickness_list = [inf]
 coherency_list = ['i']
 
 ##### film layers  ######
-film_thickness = 40.0 # nm
+film_thickness = 55.0 # nm
 #nk_f_list.append(functionize_nk_file('Au-glass_10nm_30p_effective_nk.txt',skiprows=1, kind = kind))
 nk_f_list.append(nk_f_air) # this is guess and it doesn't matter since it will be overwritten on the fly
 thickness_list.append(film_thickness)
