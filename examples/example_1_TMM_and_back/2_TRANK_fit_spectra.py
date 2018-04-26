@@ -72,7 +72,7 @@ if __name__=='__main__':
 		fit_nk_f = extrap(lamda_fine, rand_n + 1.0j*rand_k)
 
 		def fit_nk_f(lamda):
-			return 1.0+0.0*lamda
+			return 1.0+0.01j+0.00*lamda
 
 
 

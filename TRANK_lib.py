@@ -233,7 +233,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 	from numpy import pi,exp,abs,sqrt, array, matmul, loadtxt, zeros, savetxt, inf, diff, ones
 	from scipy.optimize import root, least_squares, minimize
-	from TRANK import extrap_c
+	from TRANK import extrap
 
 
 	#point_multiplicity = len(spectrum_list_generator(lamda_list[0]))
@@ -335,36 +335,10 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	for i in range(len(lamda_list)):
 		nk_list.append(solution[2*i] + 1.0j*solution[2*i+1]  )
 
-	fit_nk_f = extrap_c(lamda_list, nk_list, kind = interpolation_type)
+	fit_nk_f = extrap(lamda_list, nk_list, kind = interpolation_type)
 
 
 	return fit_nk_f
-
-
-
-
-
-def KK_lamda(lamda_list, lamda_fine,  k,  cshift = 1e-4) :
-	#KK transform in Wavelength
-	# cshift is basically scaled so its universal i think
-	# testing shows that cubic interpoltion and trapezoind rule excede the accurcy of just using the fine grid due to error cancelation
-	from scipy.integrate import simps, trapz
-	from scipy.interpolate import griddata
-
-	from numpy import array, zeros, pi
-	#print (lamda_list, k)
-	#rint (len(lamda_list), len(k))
-	k_fine = griddata(array(lamda_list), array(k), (array(lamda_fine)), method='cubic', fill_value = 0.0)
-	#print (k_fine)
-	n_out = zeros(len(lamda_list)) ### we use the fine lamda grid for the KK integral but we only need to evalute it at the coarse lamba grid points!
-	k_over_lamda = k_fine/lamda_fine
-	for i in range(len(lamda_list)): #parralelize this in the future!
-		lamda_out = lamda_list[i]
-
-		#n_out[i] = 1.0 + 2.0/pi * simps( k_over_lamda * (1.0/ ( (lamda_out/lamda_fine)**2 - 1.0 + cshift*1.0j)), lamda_fine).real
-		n_out[i] = 1.0 + 2.0/pi * trapz( k_over_lamda * (1.0/ ( (lamda_out/lamda_fine)**2 - 1.0 + cshift*1.0j)), lamda_fine).real
-
-	return n_out
 
 
 
@@ -377,7 +351,8 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 	from numpy import pi,exp,abs,sqrt, array, matmul, loadtxt, zeros, savetxt, inf, diff, ones, mean
 	from scipy.optimize import root, least_squares, minimize
-	from TRANK import extrap_c
+	from TRANK import extrap
+	from TRANK import parallel_DKKT_n_from_lamda_k as KKT
 
 
 	#point_multiplicity = len(TR_pair_list_generator(lamda_list[0]))
@@ -395,7 +370,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 		#FYI -> k = array(k_and_p_list[0:-1])
 		k = k_and_p_list[0:-1]
 		p = k_and_p_list[-1]
-		n = p + KK_lamda(lamda_list = lamda_list, lamda_fine = lamda_fine,  k = k )
+		n = p + KKT(lamda_list = lamda_list, k = k, compute_pool = my_pool )
 
 
 
@@ -486,17 +461,20 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	else:
 		raise ValueError("Invalid minimization method!")
 
-	my_pool.terminate()
-	my_pool.close()
+
 
 	k_and_p_list = solution
 	k = k_and_p_list[0:-1]
 	p = k_and_p_list[-1]
-	n = p + KK_lamda(lamda_list = lamda_list, lamda_fine = lamda_fine,  k = k )
+	n = p +  KKT(lamda_list = lamda_list, k = k, compute_pool = my_pool )
 	print ('Final principle value:',p)
 
 
-	fit_nk_f = extrap_c(lamda_list, n + 1.0j*k, kind = interpolation_type)
+	fit_nk_f = extrap(lamda_list, n + 1.0j*k, kind = interpolation_type)
+
+
+	my_pool.terminate()
+	my_pool.close()
 
 	return fit_nk_f
 
