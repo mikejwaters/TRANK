@@ -170,7 +170,7 @@ def error_plot(lamda_list, rms_spectrum,
 				reducible_error_spectrum = [],
 				lamda_fine = [], rms_spectrum_fine = [], reducible_error_spectrum_fine = [],
 				title_string = '',
-				file_name = 'error_map.pdf', zoom_window = [], show_plots = False ):
+				file_name = 'error_map.pdf', zoom_window = [], show_plots = False, y_window = [] ):
 
 
 	if show_plots == False:
@@ -220,6 +220,9 @@ def error_plot(lamda_list, rms_spectrum,
 		gca().set_xlim(min(lamda_list),max(lamda_list))
 	else:
 		gca().set_xlim(zoom_window[0],zoom_window[1])
+
+	if y_window != []:
+		gca().set_ylim(y_window[0], y_window[1])
 
 	gcf().tight_layout(pad=0.1)
 	savefig(file_name ,dpi=600, transparent = True)

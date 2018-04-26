@@ -1,6 +1,6 @@
 
 
-from TRANK import rms_error_spectrum, nk_plot, try_mkdir, functionize_nk_file, extrap,  error_adaptive_iterative_fit_spectra
+from TRANK import rms_error_spectrum, nk_plot, try_mkdir, functionize_nk_file, extrap_c,  error_adaptive_iterative_fit_spectra
 
 if __name__=='__main__':
 
@@ -25,7 +25,7 @@ if __name__=='__main__':
 	dlamda_min = 1
 	dlamda_max = 50
 	lamda_min = 300
-	lamda_max = 1200
+	lamda_max = 1000
 	lamda_fine = arange(lamda_min, lamda_max + dlamda_min/2.0 , dlamda_min)
 
 
@@ -69,7 +69,7 @@ if __name__=='__main__':
 		min_k, max_k  = 0.0, 0.1
 		rand_n = rand(lamda_fine.size)*(max_n - min_n) + min_n
 		rand_k = rand(lamda_fine.size)*(max_k - min_k) + min_k
-		fit_nk_f = extrap(lamda_fine, rand_n + 1.0j*rand_k)
+		fit_nk_f = extrap_c(lamda_fine, rand_n + 1.0j*rand_k)
 
 		def fit_nk_f(lamda):
 			return 1.0+0.0*lamda
@@ -91,8 +91,8 @@ if __name__=='__main__':
 				lamda_max = lamda_max,
 				dlamda_min = dlamda_min,
 				dlamda_max = dlamda_max,
-				delta_weight = 0.1, tolerance = 1e-5, interpolation_type = 'cubic',
-				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.002,
+				delta_weight = 0.02, tolerance = 1e-5, interpolation_type = 'cubic',
+				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.001,
 				use_reducible_error = True,
 				method='least_squares',
 				KK_compliant = False,

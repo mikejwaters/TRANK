@@ -37,16 +37,20 @@ def compute_inner_log_levels(error_map, base10delta = 1.0):
 
 
 
-from TRANK import single_lamda_rms_error_map, functionize_nk_file, try_mkdir, find_min_indices_2d_array, rms_error_spectrum, extrap
-from numpy import  loadtxt, linspace
+
+from TRANK import single_lamda_rms_error_map, functionize_nk_file, try_mkdir, find_min_indices_2d_array, extrap, rms_error_spectrum
+from numpy import ceil, floor, loadtxt, arange
 
 if __name__=='__main__':
 
 	data_directory = 'TRANK_nk_fit/'
 	map_direct = 'TRANK_error_maps/'
 
-	from basic_setup  import  spectrum_list_generator,   parameter_list_generator
-	fit_nk_f =  functionize_nk_file(data_directory+'fit_nk_fine.txt', skiprows = 0)
+	from basic_setup  import  spectrum_list_generator,   parameter_list_generator, lamda_min, lamda_max
+	film_thickness = 40.0
+	parameter_list_generator.thickness = film_thickness
+
+	fit_nk_f =  functionize_nk_file( data_directory+'fit_nk_fine.txt', skiprows = 0)
 	lamda_list = loadtxt(data_directory+'fit_nk.txt' , unpack = True, usecols = [0])
 	lamda_fine = loadtxt(data_directory+'fit_nk_fine.txt' , unpack = True, usecols = [0])
 
@@ -55,51 +59,52 @@ if __name__=='__main__':
 										parameter_list_generator = parameter_list_generator)
 	rms_f = extrap(lamda_fine, rms_error_fine, kind = 'linear')
 
+
+
 	try_mkdir(map_direct )
+
+	from matplotlib.backends.backend_pdf import PdfPages
+	pdf_page_combined = PdfPages(map_direct + 'all_error_maps.pdf')
 
 
 	from matplotlib.pylab import *
-	from matplotlib import ticker
 	from matplotlib.colors import LogNorm
+	from matplotlib import ticker
 
-	fit_n_max = fit_nk_f(lamda_fine).real.max()
-	fit_k_max = fit_nk_f(lamda_fine).imag.max()
+	fit_n_max = fit_nk_f(lamda_list).real.max()
+	fit_k_max = fit_nk_f(lamda_list).imag.max()
 
-	num_n_points = 50
+	num_n_points = 100
 	num_k_points = 100
 
-	nmin, nmax = 0.01,  fit_n_max *2.0
+	nmin, nmax = 0.001,  fit_n_max *2.0
 	kmin, kmax = 0.0,  fit_k_max *1.1
 
-
+	#dn = 0.01
+	#dk = 0.01
 	use_logscale = True
 
 	nlist = linspace(nmin, nmax, num_n_points)
 	klist = linspace(kmin, kmax, num_k_points)
 
 
-	### here we select the wavelength points we want to map
-	lamda_max = max(lamda_fine)
-	lamda_min = min(lamda_fine)
 	#coarse_lamda_list = lamda_list # uses the spacing of mesh points
 	#coarse_lamda_list = arange(min(lamda_fine),max(lamda_fine)+.0001, 50) # fixed spacing
-	#coarse_lamda_list = [700] # single point
-	dlamda = 100.0
-	coarse_lamda_list = arange( ceil(lamda_min/dlamda)*dlamda, floor(lamda_max/dlamda)*dlamda + dlamda/2.0, dlamda) # only on multiples of dlamda
-
+	#coarse_lamda_list = [600] # single point
+	dlamda = 50.0
+	coarse_lamda_list = arange( ceil(lamda_min/dlamda)*dlamda, floor(lamda_max/dlamda)*dlamda + dlamda/2.0, dlamda)
 	for lamda in coarse_lamda_list:
-		print('lambda:',lamda)
+		print('lambda :',lamda)
 
 
 
-		#print(len(nlist),len(klist))
+
 		error_map = single_lamda_rms_error_map(lamda = lamda,
 				nlist = nlist,
 				klist = klist,
 				spectrum_list_generator = spectrum_list_generator,
 				parameter_list_generator = parameter_list_generator) *100.0
 
-		#print(error_map.size)
 
 
 
@@ -109,10 +114,9 @@ if __name__=='__main__':
 
 		ylabel('k', fontsize = 10)
 		xlabel('n',fontsize = 10)
-		title('$\lambda$ = %.3f nm' % lamda)
+		title('$\lambda$ = %i nm' % lamda)
 		minorticks_on()
 		gca().tick_params(axis='both', which='major', labelsize=10)
-
 
 		if use_logscale:
 
@@ -142,9 +146,10 @@ if __name__=='__main__':
 
 		legend(fontsize = 6, handlelength = 1, handletextpad = 0.2)
 
+
+
 		gcf().tight_layout(pad=0.15)
-		savefig(map_direct+'error_map_lamda_%f.pdf'%lamda,dpi = 600, transparent = True)
+		pdf_page_combined.savefig(  transparent = True)
 		close(f)
 
-
-	#show()
+	pdf_page_combined.close()

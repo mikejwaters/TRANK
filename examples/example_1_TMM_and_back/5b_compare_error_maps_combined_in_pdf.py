@@ -85,9 +85,14 @@ if __name__=='__main__':
 	klist = linspace(kmin, kmax, num_k_points)
 
 
-	coarse_lamda_list = lamda_list # uses the spacing of mesh points
+	lamda_max = max(lamda_fine)
+	lamda_min = min(lamda_fine)
+	#coarse_lamda_list = lamda_list # uses the spacing of mesh points
 	#coarse_lamda_list = arange(min(lamda_fine),max(lamda_fine)+.0001, 50) # fixed spacing
-	#coarse_lamda_list = [600] # single point
+	#coarse_lamda_list = [675] # single point
+	dlamda = 100.0
+	coarse_lamda_list = arange( ceil(lamda_min/dlamda)*dlamda, floor(lamda_max/dlamda)*dlamda + dlamda/2.0, dlamda) # only on multiples of dlamda
+
 	for lamda in coarse_lamda_list:
 		print('lambda :',lamda)
 

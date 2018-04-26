@@ -71,22 +71,19 @@ if __name__=='__main__':
 	nmin, nmax = 0.01,  fit_n_max *2.0
 	kmin, kmax = 0.0,  fit_k_max *1.1
 
-
+	#dn = 0.01
+	#dk = 0.01
 	use_logscale = True
 
 	nlist = linspace(nmin, nmax, num_n_points)
 	klist = linspace(kmin, kmax, num_k_points)
+	#nlist = arange(nmin+dn, nmax+dn/2.0, dn)
+	#klist = arange(kmin, kmax+dk/2.0, dk)
 
 
-	### here we select the wavelength points we want to map
-	lamda_max = max(lamda_fine)
-	lamda_min = min(lamda_fine)
-	#coarse_lamda_list = lamda_list # uses the spacing of mesh points
+	coarse_lamda_list = lamda_list # uses the spacing of mesh points
 	#coarse_lamda_list = arange(min(lamda_fine),max(lamda_fine)+.0001, 50) # fixed spacing
-	#coarse_lamda_list = [700] # single point
-	dlamda = 100.0
-	coarse_lamda_list = arange( ceil(lamda_min/dlamda)*dlamda, floor(lamda_max/dlamda)*dlamda + dlamda/2.0, dlamda) # only on multiples of dlamda
-
+	#coarse_lamda_list = [600] # single point
 	for lamda in coarse_lamda_list:
 		print('lambda:',lamda)
 
