@@ -37,14 +37,14 @@ def spectrum_lamda_error(params): # This has to be at the top level because map 
 	parameter_list_generator = params[3]
 
 	spectrum_list = spectrum_list_generator(lamda)
-	sqrt_point_multiplicity = sqrt(len(spectrum_list))
+	point_multiplicity =len(spectrum_list))
 	list_of_parameters = parameter_list_generator(lamda)
-	sub_error_list=[]
+	error_sqr = 0.0
 	for spectrum, parameters in zip (spectrum_list, list_of_parameters ):
 		spectrum_calculated = TMM_spectrum_wrapper(nk_fit = nk,  **parameters) # these parameters are per measurement, set of parameters for a single point tmm model
-		error = (spectrum_calculated - spectrum)/sqrt_point_multiplicity # in the formulation this gets squared later, and we look at the per Wavelength rms error and normalizing it gives portability to weights
+		error = (spectrum_calculated - spectrum) # in the formulation this gets squared later, and we look at the per Wavelength rms error and normalizing it gives portability to weights
 		#we'll put wieghting somewhere else so that the formulation is clear
-		sub_error_list.append(  error)
+		error_sqr +=  error**2
 
 	## i should try this later
 	#def error( value_and_model_parameters_tuple ):
@@ -55,21 +55,24 @@ def spectrum_lamda_error(params): # This has to be at the top level because map 
 
 	#sub_error_list = map(error, zip(spectrum_list, list_of_parameters ) )
 
-	return sub_error_list
+	return  sqrt(error_sqr/point_multiplicity)
 
 
 
 
 
 
-def pointwise_rms_error_sum_wrapper(params): # for each Wavelength, wraps the previous function TRA_lamda_error to quikcly compute error spectrum
-		from numpy import  sqrt
-		point_error_list = spectrum_lamda_error(params)
-		sum_err_square = 0.0
-		for err in point_error_list:
-			sum_err_square += err**2
-		return sqrt(sum_err_square)
+#def pointwise_rms_error_sum_wrapper(params): # for each Wavelength, wraps the previous function TRA_lamda_error to quikcly compute error spectrum
+#		from numpy import  sqrt
+#		point_error_list = spectrum_lamda_error(params)
+#		sum_err_square = 0.0
+#		for err in point_error_list:
+#			sum_err_square += err**2
+#		return sqrt(sum_err_square)
 
+
+def pointwise_rms_error_sum_wrapper(params): # in this modification, this functionality is moved insde the function it had wrapped
+		return spectrum_lamda_error(params)
 
 
 def rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list_generator):
@@ -79,7 +82,8 @@ def rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list
 
 	from multiprocessing import Pool, cpu_count
 	my_pool = Pool(cpu_count())
-	error_spectrum = my_pool.map(pointwise_rms_error_sum_wrapper, muh_inputs)
+	#error_spectrum = my_pool.map(pointwise_rms_error_sum_wrapper, muh_inputs)
+	error_spectrum = my_pool.map(spectrum_lamda_error, muh_inputs)
 
 	my_pool.terminate()
 	return error_spectrum
@@ -259,18 +263,18 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 			muh_inputs.append( (lamda_list[i], nk, spectrum_list_generator, parameter_list_generator ) )
 
 
-		error_list_lists = my_pool.map(spectrum_lamda_error, muh_inputs)
+		error_spectrum = my_pool.map(spectrum_lamda_error, muh_inputs)
 
 		#combine the sub error lists into
-		error_list = []
-		for sub_error_list in error_list_lists:
-			error_list = error_list + sub_error_list
+		#error_list = []
+		#for sub_error_list in error_list_lists:
+		#	error_list = error_list + sub_error_list
 
 		delta_array = diff(c_nk_list)*abs_delta_weight
 
-		error_list = error_list + list(delta_array.real) + list(delta_array.imag)
+		F_as_list = error_spectrum + list(delta_array.real) + list(delta_array.imag)
 
-		return error_list
+		return F_as_list
 
 	####### now for a guess list ##############
 
@@ -381,18 +385,18 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 			muh_inputs.append( (lamda_list[i], nk, spectrum_list_generator, parameter_list_generator ) )
 
 		#print (zip(lamda_list, c_nk_list))
-		error_list_lists = my_pool.map(spectrum_lamda_error, muh_inputs)
+		error_spectrum = my_pool.map(spectrum_lamda_error, muh_inputs)
 		#error_list_lists =my_pool.map(lamda_error, zip(lamda_list, c_nk_list))
 		#print (error_list_lists)
 
-		error_list = []
-		for sub_error_list in error_list_lists:
-			error_list = error_list + sub_error_list
+		#error_list = []
+		#for sub_error_list in error_list_lists:
+		#	error_list = error_list + sub_error_list
 
 
-		error_list = error_list + list( abs_delta_weight*diff(n) )   + list( abs_delta_weight * diff(k))
+		F_as_list = error_spectrum + list( abs_delta_weight*diff(n) )   + list( abs_delta_weight * diff(k))
 
-		return error_list
+		return F_as_list
 
 	####### now for a guess list ##############
 
