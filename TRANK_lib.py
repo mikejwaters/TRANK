@@ -37,7 +37,7 @@ def spectrum_lamda_error(params): # This has to be at the top level because map 
 	parameter_list_generator = params[3]
 
 	spectrum_list = spectrum_list_generator(lamda)
-	point_multiplicity =len(spectrum_list))
+	point_multiplicity =len(spectrum_list)
 	list_of_parameters = parameter_list_generator(lamda)
 	error_sqr = 0.0
 	for spectrum, parameters in zip (spectrum_list, list_of_parameters ):
