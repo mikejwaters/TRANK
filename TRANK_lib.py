@@ -72,13 +72,17 @@ def pointwise_rms_error_sum_wrapper(params): # for each Wavelength, wraps the pr
 
 
 
-def rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list_generator):
+def rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list_generator, threads = 0 ):
 	muh_inputs = []
 	for lamda in lamda_list:
 		muh_inputs.append( (lamda, nk_f(lamda), spectrum_list_generator, parameter_list_generator ) )
 
 	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	#print ('Using %i Threads' % threads)
+	
 	error_spectrum = my_pool.map(pointwise_rms_error_sum_wrapper, muh_inputs)
 
 	my_pool.terminate()
@@ -165,14 +169,18 @@ def pointwise_reducible_rms_error_sum_wrapper(params): # for each Wavelength, wr
 
 	return [reducible_error, irreducible_error]
 
-def reducible_rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list_generator):
+def reducible_rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list_generator, threads = 0):
 	muh_inputs = []
 	for lamda in lamda_list:
 		muh_inputs.append( (lamda, nk_f(lamda), spectrum_list_generator, parameter_list_generator ) )
 
 	from numpy import array, sqrt
 	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	#print ('Using %i Threads' % threads)
+
 	error_spectra = array(my_pool.map(pointwise_reducible_rms_error_sum_wrapper, muh_inputs)).T
 	my_pool.terminate()
 
@@ -182,14 +190,17 @@ def reducible_rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, para
 
 
 
-def single_lamda_rms_error_map(lamda, nlist, klist, spectrum_list_generator, parameter_list_generator):
+def single_lamda_rms_error_map(lamda, nlist, klist, spectrum_list_generator, parameter_list_generator, threads = 0):
 	muh_inputs = []
 	for n in nlist:
 		for k in klist:
 			muh_inputs.append( (lamda, n+1.0j*k, spectrum_list_generator, parameter_list_generator ) )
 
 	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	#print ('Using %i Threads' % threads)
 
 	from numpy import reshape, array
 	error_list = my_pool.map(pointwise_rms_error_sum_wrapper, muh_inputs)
@@ -211,7 +222,7 @@ def spectrum_TMM_lamda(params): # This has to be at the top level because map is
 	return spectrum_list
 
 
-def TMM_spectra(lamda_list, nk_f,  parameter_list_generator):
+def TMM_spectra(lamda_list, nk_f,  parameter_list_generator, threads = 0):
 	''''''
 	#returns data in block like spectra[lamda][ spectrum] there are computational reasons why this order is this way
 	muh_inputs = []
@@ -219,14 +230,18 @@ def TMM_spectra(lamda_list, nk_f,  parameter_list_generator):
 		muh_inputs.append( (lamda, nk_f(lamda), parameter_list_generator ) )
 
 	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	#print ('Using %i Threads' % threads))
+
 	spectra = my_pool.map(spectrum_TMM_lamda, muh_inputs)
 	my_pool.terminate()
 	#
 	return spectra
 
 ###################
-def fit_spectra_nk_sqr(lamda_list, spectrum_list_generator, parameter_list_generator,  nk_f_guess, delta_weight = 0.1, tolerance = 1e-4, no_negative = True, interpolation_type = 'cubic', method = 'least_squares'):
+def fit_spectra_nk_sqr(lamda_list, spectrum_list_generator, parameter_list_generator,  nk_f_guess, delta_weight = 0.1, tolerance = 1e-4, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
 	'''n_front and n_back must be real valued for this to work without caveats.
 thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
 
@@ -245,8 +260,10 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	abs_delta_weight = sqrt(delta_weight**2  * (len(lamda_list)/(len(lamda_list)-1.0)))
 
 	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
-	#my_pool = Pool(1)
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	print ('Using %i Threads' % threads)
 
 
 	def F_error(nk_list):
@@ -344,7 +361,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 
 def fit_spectra_nk_sqr_KK_compliant(lamda_list, lamda_fine, spectrum_list_generator, parameter_list_generator,  nk_f_guess,
-								delta_weight = 0.1, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares'):
+								delta_weight = 0.1, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
 	'''n_front and n_back must be real valued for this to work without caveats.
 thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
 
@@ -361,9 +378,10 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	abs_delta_weight = sqrt(delta_weight**2  * (len(lamda_list)/(len(lamda_list)-1.0)))
 
 	from multiprocessing import Pool, cpu_count
-	my_pool = Pool(cpu_count())
-	#my_pool = Pool(1)
-
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	print ('Using %i Threads' % threads)
 
 	def F_error(k_and_p_list):
 		# the last value is the principle value

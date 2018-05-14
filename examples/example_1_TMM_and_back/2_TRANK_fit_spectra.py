@@ -99,4 +99,5 @@ if __name__=='__main__':
 				reuse_mode = use_old_nk, lamda_list = old_lamda,
 				zero_weight_extra_pass = False,
 				verbose = True, make_plots = True, show_plots = show_plots,
+				threads = 4,
 				nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' )

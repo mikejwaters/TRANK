@@ -18,6 +18,7 @@ def error_adaptive_iterative_fit_spectra(
 			reuse_mode = False,
 			KK_compliant = False,
 			interpolation_type = 'cubic',
+			threads = 0,
 			zero_weight_extra_pass = False, data_directory ='TRANK_nk_fit/', method = 'least_squares', verbose = True,
 			make_plots = True, show_plots = True, nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' ):
 
@@ -88,7 +89,7 @@ def error_adaptive_iterative_fit_spectra(
 					nk_f_guess = fit_nk_f,
 					delta_weight = delta_weight,
 					tolerance = tolerance,
-					interpolation_type = interpolation_type, method = method)
+					interpolation_type = interpolation_type, method = method, threads = threads)
 
 		t0 = time()
 		if KK_compliant:
@@ -105,14 +106,14 @@ def error_adaptive_iterative_fit_spectra(
 		rms_spectrum = rms_error_spectrum(lamda_list = lamda_list,
 							nk_f = fit_nk_f,
 							spectrum_list_generator = spectrum_list_generator,
-							parameter_list_generator = parameter_list_generator)
+							parameter_list_generator = parameter_list_generator, threads = threads)
 		net_rms = sqrt( mean( array(rms_spectrum)**2 ) )
 		max_rms = max(rms_spectrum)
 
 		rms_spectrum_fine = rms_error_spectrum(lamda_list = lamda_fine,
 						nk_f = fit_nk_f,
 						spectrum_list_generator = spectrum_list_generator,
-						parameter_list_generator = parameter_list_generator)
+						parameter_list_generator = parameter_list_generator, threads = threads)
 		net_rms_fine = sqrt( mean( array(rms_spectrum_fine)**2 ) )
 
 		### saving the pass data
@@ -124,7 +125,7 @@ def error_adaptive_iterative_fit_spectra(
 		 						lamda_list = lamda_list,
 								nk_f = fit_nk_f,
 								spectrum_list_generator = spectrum_list_generator,
-								parameter_list_generator = parameter_list_generator)
+								parameter_list_generator = parameter_list_generator, threads = threads)
 			adaptation_threshold = max( min(percentile(reducible_error_spectrum,85),adaptation_threshold_max) , adaptation_threshold_min)
 		else:
 			reducible_error_spectrum = []
