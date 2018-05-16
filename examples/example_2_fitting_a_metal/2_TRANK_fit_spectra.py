@@ -88,6 +88,27 @@ if __name__=='__main__':
 	if show_plots: show()
 
 
+	if False: # turn this on to see the horrors of bandwidth edge effects on metals
+		error_adaptive_iterative_fit_spectra(
+					nk_f_guess = fit_nk_f,
+					spectrum_list_generator = spectrum_list_generator,
+					parameter_list_generator = parameter_list_generator,
+					lamda_min = lamda_min,
+					lamda_max = lamda_max,
+					dlamda_min = dlamda_min,
+					dlamda_max = dlamda_max,
+					delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'cubic',
+					adaptation_threshold_max = adaptation_threshold_max, adaptation_threshold_min = adaptation_threshold_min,
+					use_reducible_error = True,
+					max_passes
+					method='least_squares',
+					KK_compliant = False,
+					reuse_mode = use_old_nk, lamda_list = old_lamda,
+					zero_weight_extra_pass = False,
+					verbose = True, make_plots = True, show_plots = show_plots,
+					nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' )
+
+
 
 	error_adaptive_iterative_fit_spectra(
 				nk_f_guess = fit_nk_f,

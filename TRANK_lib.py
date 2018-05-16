@@ -288,8 +288,17 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	nk_guess_list = []
 	for i in range(len(lamda_list)):
 		nk = nk_f_guess(lamda_list[i])
-		nk_guess_list.append(abs(nk.real))
-		nk_guess_list.append(abs(nk.imag))
+		if no_negative:
+			n = nk.real
+			k = nk.imag
+			if n < 0.0 : n = 0.0
+			if k < 0.0 : k = 0.0
+			nk_guess_list.append(n)
+			nk_guess_list.append(k)
+		else:
+			nk_guess_list.append(nk.real)
+			nk_guess_list.append(nk.imag)
+
 
 	######### test
 	if False: print(F_error(nk_guess_list))
