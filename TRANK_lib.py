@@ -40,20 +40,14 @@ def spectrum_lamda_error(params): # This has to be at the top level because map 
 	sqrt_point_multiplicity = sqrt(len(spectrum_list))
 	list_of_parameters = parameter_list_generator(lamda)
 	sub_error_list=[]
-	for spectrum, parameters in zip (spectrum_list, list_of_parameters ):
-		spectrum_calculated = TMM_spectrum_wrapper(nk_fit = nk,  **parameters) # these parameters are per measurement, set of parameters for a single point tmm model
-		error = (spectrum_calculated - spectrum)/sqrt_point_multiplicity # in the formulation this gets squared later, and we look at the per Wavelength rms error and normalizing it gives portability to weights
-		#we'll put wieghting somewhere else so that the formulation is clear
-		sub_error_list.append(  error)
-
-	## i should try this later
-	#def error( value_and_model_parameters_tuple ):
-	#	tmm_parameters = value_and_model_parameters_tuple[1]
-	#	value = value_and_model_parameters_tuple[0]
-	#	error = (TMM_spectrum(nk_fit = nk,  **tmm_parameters ) - value)/sqrt_point_multiplicity
-	#	return  error
-
-	#sub_error_list = map(error, zip(spectrum_list, list_of_parameters ) )
+	if len(spectrum_list) > 0:
+		for spectrum, parameters in zip (spectrum_list, list_of_parameters ):
+			spectrum_calculated = TMM_spectrum_wrapper(nk_fit = nk,  **parameters) # these parameters are per measurement, set of parameters for a single point tmm model
+			error = (spectrum_calculated - spectrum)/sqrt_point_multiplicity # in the formulation this gets squared later, and we look at the per Wavelength rms error and normalizing it gives portability to weights
+			#we'll put wieghting somewhere else so that the formulation is clear
+			sub_error_list.append(  error)
+	else:
+		print ("WARNING: No spectra at lamda = %f point, nk values here are only interpolations!"lamda)
 
 	return sub_error_list
 
@@ -82,7 +76,7 @@ def rms_error_spectrum(lamda_list, nk_f, spectrum_list_generator, parameter_list
 		threads = cpu_count()
 	my_pool = Pool(threads)
 	#print ('Using %i Threads' % threads)
-	
+
 	error_spectrum = my_pool.map(pointwise_rms_error_sum_wrapper, muh_inputs)
 
 	my_pool.terminate()
