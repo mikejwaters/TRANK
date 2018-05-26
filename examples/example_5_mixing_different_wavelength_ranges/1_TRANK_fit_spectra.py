@@ -24,10 +24,10 @@ if __name__=='__main__':
 
 	dlamda_min = 1
 	dlamda_max = 50
-	delta_weight = 0.05
+	lamda_max = 1300
+	delta_weight = 0.1/dlamda_min
 	use_reducible_error = True
-	max_passes = 0 # use 0 so that it guesses based on the log2( dlamda_max/ dlamda_min )
-	extra_passes = 0 # this number forces extra masses, even superscedes max_passes
+	max_passes = 10 # use 0 so that it guesses based on the log2( dlamda_max/ dlamda_min )
 	#these are now being extracted from the data in the basic_setup file
 	#lamda_min = 200
 	#lamda_max = 1600
@@ -86,7 +86,7 @@ if __name__=='__main__':
 		fit_nk_f = extrap(lamda_fine, rand_n + 1.0j*rand_k)
 
 		def fit_nk_f(lamda):
-			return 1.0+0.5j+0.0*lamda
+			return 2.0+0.5j+0.0*lamda
 
 
 
@@ -94,7 +94,26 @@ if __name__=='__main__':
 			title_string='Initial nk',show_nodes = True, show_plots = show_plots)
 
 	if show_plots: show()
-
+	if use_old_nk == False:
+		fit_nk_f, lamda_list = error_adaptive_iterative_fit_spectra(
+							nk_f_guess = fit_nk_f,
+							spectrum_list_generator = spectrum_list_generator,
+							parameter_list_generator = parameter_list_generator,
+							lamda_min = lamda_min,
+							lamda_max = lamda_max,
+							dlamda_min = dlamda_min,
+							dlamda_max = dlamda_max,
+							delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'linear',
+							adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.001,
+							use_reducible_error = use_reducible_error,
+							method='least_squares',
+							KK_compliant = True,
+							max_passes = 3,
+							reuse_mode = False,
+							zero_weight_extra_pass = False,
+							interpolate_to_fine_grid_at_end = False,
+							verbose = True, make_plots = True, show_plots = show_plots,
+							nk_spectrum_file_format = 'TRANK_nk_KK_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_KK_pass_%i.pdf' )
 
 
 	error_adaptive_iterative_fit_spectra(
@@ -105,13 +124,12 @@ if __name__=='__main__':
 				lamda_max = lamda_max,
 				dlamda_min = dlamda_min,
 				dlamda_max = dlamda_max,
-				delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'linear',
-				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.001,
+				delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'cubic',
+				adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.001,
 				use_reducible_error = use_reducible_error,
 				method='least_squares',
 				KK_compliant = False,
 				max_passes = max_passes,
-				extra_passes = extra_passes,
 				reuse_mode = use_old_nk, lamda_list = old_lamda,
 				zero_weight_extra_pass = False,
 				verbose = True, make_plots = True, show_plots = show_plots,

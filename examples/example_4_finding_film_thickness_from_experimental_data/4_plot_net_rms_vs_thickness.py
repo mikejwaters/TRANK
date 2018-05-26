@@ -10,7 +10,7 @@ from glob import glob
 directory_list = glob('TRANK_nk_fit_*_nm/')
 
 
-use_reducible_error = False
+use_reducible_error = True
 
 net_rms_list = []
 net_rms_fine_list = []

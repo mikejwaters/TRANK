@@ -21,9 +21,9 @@ film_thickness_list = arange(min_thickness, max_thickness+.0001 , 5)
 #film_thickness_list = [40.0, 45.0, 50.0]
 
 
-dlamda_min = 1
-dlamda_max = 50
-delta_weight = 0.05
+dlamda_min = 5
+dlamda_max = 100
+delta_weight = 0.1/dlamda_min
 lamda_fine = arange(lamda_min, lamda_max + dlamda_min/2.0 , dlamda_min)
 
 show_plots = False

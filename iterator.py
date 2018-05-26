@@ -10,14 +10,15 @@ def error_adaptive_iterative_fit_spectra(
 			dlamda_min,
 			dlamda_max,
 			delta_weight = 0.1, tolerance = 1e-5,
-			adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.0005,
+			adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.0005, adaptation_percentile = 85,
 			max_passes = 0,
-			extra_passes = 0,
 			lamda_list = [],
 			use_reducible_error = True,
 			reuse_mode = False,
 			KK_compliant = False,
 			interpolation_type = 'cubic',
+			no_negative = True,
+			interpolate_to_fine_grid_at_end = True,
 			threads = 0,
 			zero_weight_extra_pass = False, data_directory ='TRANK_nk_fit/', method = 'least_squares', verbose = True,
 			make_plots = True, show_plots = True, nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' ):
@@ -27,6 +28,7 @@ def error_adaptive_iterative_fit_spectra(
 						rms_error_spectrum, reducible_rms_error_spectrum, nk_plot, error_plot, try_mkdir)
 	from time import time
 	from numpy import floor, log2, ceil, linspace, diff, sqrt, mean, array, savetxt, percentile
+	from copy import deepcopy
 	try_mkdir(data_directory)
 
 	if show_plots:
@@ -47,6 +49,8 @@ def error_adaptive_iterative_fit_spectra(
 			passes = int(max_passes)
 
 	else:
+		# this part guesses how many passes are required to reach the finest grid level
+		# it also determines the fine grid based on the smallest delta lambda you have
 		dlamda_min_found = min(diff(lamda_list))
 		power_of_2 = int(round( log2(dlamda_min_found/dlamda_min) ))
 		#print( log2(dlamda_min_found/dlamda_min)  )
@@ -63,7 +67,6 @@ def error_adaptive_iterative_fit_spectra(
 			passes = int(max_passes)
 
 
-	passes += extra_passes
 	if zero_weight_extra_pass: # this will fail if the num new points conidtion is met
 		passes+=1
 
@@ -73,10 +76,20 @@ def error_adaptive_iterative_fit_spectra(
 	print ('dlamda_max:',dlamda_max )
 	print ('dlamda_min:',dlamda_min )
 
+	# literally jury rigging the conidtion so it starts the loop, ugly, but cleaner than the alternatives
 	num_new_points = len(lamda_list)
 	total_iteration_time = 0.0
 	pass_number = 1
+	new_lamda_list = [] # we add no new lamda points for the first pass
 	while pass_number <= passes and num_new_points > 0:
+
+		## add new lamda points from last pass, does nothing if it is the first pass
+		lamda_list = sorted(new_lamda_list+list(lamda_list))
+		if pass_number > 1:
+			print('New Points:', new_lamda_list)
+			print('--> Points Added: ', num_new_points)
+
+
 
 		print('-----------> Pass %i/%i' % (pass_number,passes))
 		print('--> Fitting %i Points' % len(lamda_list))
@@ -89,6 +102,7 @@ def error_adaptive_iterative_fit_spectra(
 					nk_f_guess = fit_nk_f,
 					delta_weight = delta_weight,
 					tolerance = tolerance,
+					no_negative = no_negative,
 					interpolation_type = interpolation_type, method = method, threads = threads)
 
 		t0 = time()
@@ -116,20 +130,20 @@ def error_adaptive_iterative_fit_spectra(
 						parameter_list_generator = parameter_list_generator, threads = threads)
 		net_rms_fine = sqrt( mean( array(rms_spectrum_fine)**2 ) )
 
-		### saving the pass data
-		nk = fit_nk_f(lamda_list)
-		savetxt(data_directory+'fit_nk.txt',array([lamda_list, nk.real, nk.imag, array(rms_spectrum)*100.0]).T)
 
-		if use_reducible_error:
+		nk = fit_nk_f(lamda_list)
+		if use_reducible_error == False:
+			reducible_error_spectrum = []
+			adaptation_threshold = max( min(percentile(rms_spectrum,adaptation_percentile),adaptation_threshold_max) , adaptation_threshold_min)
+			savetxt(data_directory+'fit_nk.txt',array([lamda_list, nk.real, nk.imag, array(rms_spectrum)*100.0]).T)
+		else:
 			reducible_error_spectrum, irreducible_error_spectrum = reducible_rms_error_spectrum(
 		 						lamda_list = lamda_list,
 								nk_f = fit_nk_f,
 								spectrum_list_generator = spectrum_list_generator,
 								parameter_list_generator = parameter_list_generator, threads = threads)
-			adaptation_threshold = max( min(percentile(reducible_error_spectrum,85),adaptation_threshold_max) , adaptation_threshold_min)
-		else:
-			reducible_error_spectrum = []
-			adaptation_threshold = max( min(percentile(rms_spectrum,85),adaptation_threshold_max) , adaptation_threshold_min)
+			adaptation_threshold = max( min(percentile(reducible_error_spectrum, adaptation_percentile),adaptation_threshold_max) , adaptation_threshold_min)
+			savetxt(data_directory+'fit_nk.txt',array([lamda_list, nk.real, nk.imag, array(rms_spectrum)*100.0, array(reducible_error_spectrum)*100]).T)
 
 
 		print('Fine Grid Net RMS Error: %f %%' % (net_rms_fine*100))
@@ -154,25 +168,22 @@ def error_adaptive_iterative_fit_spectra(
 				show()
 
 
+		############ adaptation
 		if use_reducible_error:
 			adaptation_spectrum = reducible_error_spectrum
 		else:
 			adaptation_spectrum = rms_spectrum
-		############ adaptation
+
+		#### we combine the new points with the old at the start of the next pass
 		new_lamda_list = []
-		#adaptation_threshold = max(rms_spectrum )/2.0
 		for i in range(len(lamda_list)-1):
 			if (adaptation_spectrum[i] > adaptation_threshold) or (adaptation_spectrum[i+1] > adaptation_threshold): # should we refine?
 				if (lamda_list[i+1] - lamda_list[i]) > dlamda_min: # if the gap is bigger than the minimum, then it is allowed to refine
 					new_lamda = (lamda_list[i]+lamda_list[i+1])/2.0
 					new_lamda_list.append( new_lamda)
-
-		#### now we combine the new points with the old
+		### this is important to have here for the termination condition
 		num_new_points = len(new_lamda_list)
-		print('New Points:', new_lamda_list)
-		print('--> Points Added: ', num_new_points)
 
-		lamda_list = sorted(new_lamda_list+list(lamda_list))
 
 		#### doing the stuff for the last extra pass if there is one
 		if zero_weight_extra_pass:
@@ -191,13 +202,30 @@ def error_adaptive_iterative_fit_spectra(
 		else:
 			pass_number += 1
 
-
 	print('Total Iterating Time: %.1f seconds'%total_iteration_time)
-	nk = fit_nk_f(lamda_fine)
-	savetxt(data_directory+'fit_nk_fine.txt',array([lamda_fine, nk.real, nk.imag, array(rms_spectrum_fine)*100.0]).T)
 
 
-	return fit_nk_f
+	if interpolate_to_fine_grid_at_end:
+		print('Interpolating to fine grid and saving...')
+		nk = fit_nk_f(lamda_fine)
+		
+		if use_reducible_error == False:
+			savetxt(data_directory+'fit_nk_fine.txt',array([lamda_fine, nk.real, nk.imag, array(rms_spectrum_fine)*100.0]).T)
+		else:
+			reducible_error_spectrum_fine, irreducible_error_spectrum = reducible_rms_error_spectrum(
+		 						lamda_list = lamda_fine,
+								nk_f = fit_nk_f,
+								spectrum_list_generator = spectrum_list_generator,
+								parameter_list_generator = parameter_list_generator, threads = threads)
+			savetxt(data_directory+'fit_nk_fine.txt',array([lamda_fine, nk.real, nk.imag, array(rms_spectrum_fine)*100.0,  array(reducible_error_spectrum_fine)*100.0 ]).T)
+
+
+	return fit_nk_f, lamda_list
+
+
+
+
+
 
 
 
@@ -386,7 +414,7 @@ def error_adaptive_iterative_fit(
 				tolerance = 1e-8
 				num_new_points = 1 # jury rig it so it continues regardless of state of convergence
 				pass_number = passes # skip to last passes
-				print('--> Skipping to extra pass due to early conidtion statisfaction')
+				print('--> Skipping to zero weight extra pass due to early conidtion statisfaction')
 		else:
 			pass_number += 1
 

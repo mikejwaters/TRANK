@@ -47,7 +47,7 @@ def spectrum_lamda_error(params): # This has to be at the top level because map 
 			#we'll put wieghting somewhere else so that the formulation is clear
 			sub_error_list.append(  error)
 	else:
-		print ("WARNING: No spectra at lamda = %f point, nk values here are only interpolations!"lamda)
+		print ("WARNING: No spectra at lamda = %f point, nk values here are only interpolations!" % lamda)
 
 	return sub_error_list
 
@@ -429,7 +429,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 		guess_k_and_p_list.append( k)
 		p+= nk.real
 	# now we put p at the end
-	p = p/len(lamda_list) - 1.0   # this is a guess for the principle value
+	p = p/len(lamda_list)    # this is a guess for the principle value
 	print ('principle value guess:',p)
 	guess_k_and_p_list.append(p)
 

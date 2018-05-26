@@ -66,7 +66,7 @@ if __name__=='__main__':
 				passes = 2
 
 
-	#use_old_nk = False
+	use_old_nk = False
 	if use_old_nk == False:
 		old_lamda = lamda_fine
 
@@ -78,7 +78,7 @@ if __name__=='__main__':
 		fit_nk_f = extrap_c(lamda_fine, rand_n + 1.0j*rand_k)
 
 		def fit_nk_f(lamda):
-			return 1.0+0.0*lamda
+			return 1.0+0.01j+0.0*lamda
 
 
 
@@ -88,8 +88,8 @@ if __name__=='__main__':
 	if show_plots: show()
 
 
-	if False: # turn this on to see the horrors of bandwidth edge effects on metals
-		error_adaptive_iterative_fit_spectra(
+	if True: # turn this on to see the horrors of bandwidth edge effects on metals
+		fit_nk_f = error_adaptive_iterative_fit_spectra(
 					nk_f_guess = fit_nk_f,
 					spectrum_list_generator = spectrum_list_generator,
 					parameter_list_generator = parameter_list_generator,
@@ -100,13 +100,13 @@ if __name__=='__main__':
 					delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'cubic',
 					adaptation_threshold_max = adaptation_threshold_max, adaptation_threshold_min = adaptation_threshold_min,
 					use_reducible_error = True,
-					max_passes
+					max_passes = 1,
 					method='least_squares',
-					KK_compliant = False,
+					KK_compliant = True,
 					reuse_mode = use_old_nk, lamda_list = old_lamda,
 					zero_weight_extra_pass = False,
 					verbose = True, make_plots = True, show_plots = show_plots,
-					nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' )
+					nk_spectrum_file_format = 'TRANK_nk_pass_%i_KK_compliant.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i_KK_compliant.pdf' )
 
 
 

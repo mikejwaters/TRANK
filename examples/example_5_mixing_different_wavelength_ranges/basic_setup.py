@@ -46,8 +46,11 @@ thickness_list.append(inf)
 coherency_list.append('i')
 
 ###########
-#fit_nk_f = nk_f_list[layer_index_of_fit]
-
+#### create the reversed lists
+coherency_list_r = list(reversed(coherency_list))
+nk_f_list_r = list(reversed(nk_f_list))
+thickness_list_r = list(reversed(thickness_list))
+layer_index_of_fit_r = len(thickness_list)-layer_index_of_fit - 1
 
 #################  experimental data
 # lnear interpoation prevents interpoation of TRA values outside 0-100%
@@ -57,7 +60,7 @@ spectrum_name_list = [] # this is for me to label things later
 lamda_ranges = [] # [first index, last index, lamda min, lamda_max] # groups data by lamda ranges
 
 
-#######
+#######  Frontside
 # In MS Excel, I get the best results when saving as windows .txt files and then removing any poorly converted characters in those files
 T_data = loadtxt('transmittance.txt', skiprows = 2).T
 lamda  = T_data[0]
@@ -68,7 +71,7 @@ spectrum_name_list.append('0 deg Transmittance')
 R_data = loadtxt('normal_reflectance.txt', skiprows = 2).T
 lamda = R_data[0]
 spectrum_function_list.append( extrap(lamda, R_data[1] ) )
-spectrum_name_list.append('0 deg unpolarized Reflectance')
+spectrum_name_list.append('0 deg Unpolarized Reflectance')
 
 
 #######
@@ -77,11 +80,11 @@ lamda = R_data[0]
 # S => TE
 # P => TM
 spectrum_function_list.append( extrap(lamda, R_data[1] ) )
-spectrum_name_list.append('55 deg unpolarized Reflectance')
+spectrum_name_list.append('55 deg Unpolarized Reflectance')
 spectrum_function_list.append( extrap(lamda, R_data[2] ) )
-spectrum_name_list.append('65 deg unpolarized Reflectance')
+spectrum_name_list.append('65 deg Unpolarized Reflectance')
 spectrum_function_list.append( extrap(lamda, R_data[3] ) )
-spectrum_name_list.append('75 deg unpolarized Reflectance')
+spectrum_name_list.append('75 deg Unpolarized Reflectance')
 
 spectrum_function_list.append( extrap(lamda, R_data[5] ) )
 spectrum_name_list.append('55 deg P-Polarized Reflectance')
@@ -98,12 +101,52 @@ spectrum_name_list.append('75 deg P-Polarized Reflectance')
 spectrum_function_list.append( extrap(lamda, R_data[10] ) )
 spectrum_name_list.append('75 deg S-Polarized Reflectance')
 
+############## backside
+T_data = loadtxt('backside_transmittance.txt', skiprows = 2).T
+lamda  = T_data[0]
+spectrum_function_list.append( extrap(lamda, T_data[1] ) )
+spectrum_name_list.append('Backside 0 deg Transmittance')
+
+R_data = loadtxt('backside_normal_reflectance.txt', skiprows = 2).T
+lamda = R_data[0]
+spectrum_function_list.append( extrap(lamda, R_data[1] ) )
+spectrum_name_list.append('Backside 0 deg Unpolarized Reflectance')
+
+
+R_data = loadtxt('backside_reflectance.txt', skiprows = 2).T
+lamda = R_data[0]
+# S => TE
+# P => TM
+spectrum_function_list.append( extrap(lamda, R_data[1] ) )
+spectrum_name_list.append('Backside 55 deg Unpolarized Reflectance')
+spectrum_function_list.append( extrap(lamda, R_data[2] ) )
+spectrum_name_list.append('Backside 65 deg Unpolarized Reflectance')
+spectrum_function_list.append( extrap(lamda, R_data[3] ) )
+spectrum_name_list.append('Backside 75 deg Unpolarized Reflectance')
+
+spectrum_function_list.append( extrap(lamda, R_data[5] ) )
+spectrum_name_list.append('Backside 55 deg P-Polarized Reflectance')
+spectrum_function_list.append( extrap(lamda, R_data[6] ) )
+spectrum_name_list.append('Backside 55 deg S-Polarized Reflectance')
+
+spectrum_function_list.append( extrap(lamda, R_data[7] ) )
+spectrum_name_list.append('Backside 65 deg P-Polarized Reflectance')
+spectrum_function_list.append( extrap(lamda, R_data[8] ) )
+spectrum_name_list.append('Backside 65 deg S-Polarized Reflectance')
+
+spectrum_function_list.append( extrap(lamda, R_data[9] ) )
+spectrum_name_list.append('Backside 75 deg P-Polarized Reflectance')
+spectrum_function_list.append( extrap(lamda, R_data[10] ) )
+spectrum_name_list.append('Backside 75 deg S-Polarized Reflectance')
+
+##########################
 
 lamda_min = spectrum_function_list[0].lower_bound
 lamda_max = spectrum_function_list[0].upper_bound
 for spectrum_function in spectrum_function_list[1:]:
 	lamda_min = min(lamda_min, spectrum_function.lower_bound) #
 	lamda_max = max(lamda_max, spectrum_function.upper_bound) #
+
 
 ### this function is what we are creating as
 def spectrum_list_generator(lamda): # for measured or simulated spectra
@@ -126,6 +169,7 @@ def spectrum_list_generator(lamda): # for measured or simulated spectra
 def generator_function(self,lamda): # layer geometry and neighbor properties
 
 	thickness_list[layer_index_of_fit] = self.thickness
+	thickness_list_r[layer_index_of_fit_r] = self.thickness
 	# order must match the spectrum_list_generator
 	param_list = []
 	param_list.append( {
@@ -235,6 +279,117 @@ def generator_function(self,lamda): # layer geometry and neighbor properties
 			'nk_f_list' : nk_f_list,
 			'thickness_list' : thickness_list,
 			'coherency_list' : coherency_list,
+			'tm_polarization_fraction' : 0.0,
+			'spectrum' : 'R'} )
+
+	############## backside below here
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 0 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.5,
+			'spectrum' : 'T'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 0 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.5,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 55 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.5,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 65 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.5,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 75 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.5,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 55 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 1.0,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 55 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.0,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 65 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 1.0,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 65 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 0.0,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 75 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
+			'tm_polarization_fraction' : 1.0,
+			'spectrum' : 'R'} )
+
+	param_list.append( {
+			'lamda' : lamda,
+			'snell_angle_front' : 75 * pi/180,
+			'layer_index_of_fit' : layer_index_of_fit_r,
+			'nk_f_list' : nk_f_list_r,
+			'thickness_list' : thickness_list_r,
+			'coherency_list' : coherency_list_r,
 			'tm_polarization_fraction' : 0.0,
 			'spectrum' : 'R'} )
 
