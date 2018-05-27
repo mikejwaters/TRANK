@@ -22,7 +22,7 @@ if __name__=='__main__':
 
 	from numpy import arange, loadtxt, sqrt, mean, array
 
-	dlamda_min = 1
+	dlamda_min = 4
 	dlamda_max = 50
 	lamda_max = 1300
 	delta_weight = 0.1/dlamda_min

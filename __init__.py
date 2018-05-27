@@ -18,7 +18,9 @@ from .NKT_iterator import ( NKT_error_adaptive_iterative_fit_spectra)
 
 
 
-from .KK_lib import (dual_grid_direct_KK_n_from_lamda_k, DKKT_n_from_lamda_k, parallel_DKKT_n_from_lamda_k)
+from .KK_lib import (dual_grid_direct_KK_n_from_lamda_k, DKKT_n_from_lamda_k,
+					parallel_DKKT_n_from_lamda_k,
+					upper_bound_extrapolation_order_0, upper_bound_extrapolation_order_1, parallel_DKKT_n_from_lamda_k_with_edge_corrections)
 
 
 from .helpers import (extrap, extrap_c, functionize_nk_file, functionize_frequency_and_permittivity_file, try_mkdir, nk_plot, error_plot)

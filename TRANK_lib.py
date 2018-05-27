@@ -372,7 +372,8 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	from numpy import pi,exp,abs,sqrt, array, matmul, loadtxt, zeros, savetxt, inf, diff, ones, mean
 	from scipy.optimize import root, least_squares, minimize
 	from TRANK import extrap
-	from TRANK import parallel_DKKT_n_from_lamda_k as KKT
+	#from TRANK import parallel_DKKT_n_from_lamda_k as KKT
+	from TRANK import parallel_DKKT_n_from_lamda_k_with_edge_corrections as KKT
 
 
 	#point_multiplicity = len(TR_pair_list_generator(lamda_list[0]))
