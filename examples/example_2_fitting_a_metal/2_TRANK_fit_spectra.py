@@ -66,7 +66,7 @@ if __name__=='__main__':
 				passes = 2
 
 
-	use_old_nk = False
+	#use_old_nk = False
 	if use_old_nk == False:
 		old_lamda = lamda_fine
 
@@ -88,8 +88,8 @@ if __name__=='__main__':
 	if show_plots: show()
 
 
-	if True: # turn this on to see the horrors of bandwidth edge effects on metals
-		fit_nk_f = error_adaptive_iterative_fit_spectra(
+	if False: # turn this on to see the horrors of bandwidth edge effects on metals
+		fit_nk_f, lamda_list = error_adaptive_iterative_fit_spectra(
 					nk_f_guess = fit_nk_f,
 					spectrum_list_generator = spectrum_list_generator,
 					parameter_list_generator = parameter_list_generator,
