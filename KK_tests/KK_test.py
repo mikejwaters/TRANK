@@ -25,7 +25,11 @@ def drude_occilator_of_omega(omega,
 
 	return  - ( omega_p**2 )/( omega**2 - 1.0j*omega*gamma)
 
-
+def epsilon_of_omega_test_0(omega): #  simple lorrentzian, a sanity test that shouldn't be affected by edges
+	epsilon =  epsilon_inf  + 1.0 * lorrentz_occilator_of_omega(omega, omega_0 = 1.0/1000, gamma = 1.0/10000, omega_p = 0.001) \
+							+ 0.0 * lorrentz_occilator_of_omega(omega, omega_0 = 1.0/2100, gamma = 1.0/4000, omega_p = 0.0005) \
+							+ 0.0 * drude_occilator_of_omega(omega, omega_p = 0.001, gamma = 1.0/2000)
+	return epsilon
 
 def epsilon_of_omega_test_1(omega): #  sharp peak and atruncated peak with negative slope, easiest to correct for
 	epsilon =  epsilon_inf  + 1.0 * lorrentz_occilator_of_omega(omega, omega_0 = 1.0/800, gamma = 1.0/10000, omega_p = 0.001) \
