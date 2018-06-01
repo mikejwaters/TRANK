@@ -69,7 +69,7 @@ def epsilon_of_omega_test_5(omega): # mettallic conductivivty across the whole r
 	return epsilon
 
 
-epsilon_of_omega = epsilon_of_omega_test_4
+epsilon_of_omega = epsilon_of_omega_test_2
 
 omega = 1.0/lamda_list
 epsilon = epsilon_of_omega(omega)

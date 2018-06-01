@@ -9,7 +9,7 @@ def error_adaptive_iterative_fit_spectra(
 			lamda_max,
 			dlamda_min,
 			dlamda_max,
-			delta_weight = 0.1, tolerance = 1e-5,
+			delta_weight = 0.1, tolerance = 1e-5, k_weight_fraction = 1.0,
 			adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.0005, adaptation_percentile = 85,
 			max_passes = 0,
 			lamda_list = [],
@@ -103,6 +103,7 @@ def error_adaptive_iterative_fit_spectra(
 					delta_weight = delta_weight,
 					tolerance = tolerance,
 					no_negative = no_negative,
+					k_weight_fraction = k_weight_fraction,
 					interpolation_type = interpolation_type, method = method, threads = threads)
 
 		t0 = time()
@@ -208,7 +209,7 @@ def error_adaptive_iterative_fit_spectra(
 	if interpolate_to_fine_grid_at_end:
 		print('Interpolating to fine grid and saving...')
 		nk = fit_nk_f(lamda_fine)
-		
+
 		if use_reducible_error == False:
 			savetxt(data_directory+'fit_nk_fine.txt',array([lamda_fine, nk.real, nk.imag, array(rms_spectrum_fine)*100.0]).T)
 		else:

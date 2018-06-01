@@ -235,7 +235,7 @@ def TMM_spectra(lamda_list, nk_f,  parameter_list_generator, threads = 0):
 	return spectra
 
 ###################
-def fit_spectra_nk_sqr(lamda_list, spectrum_list_generator, parameter_list_generator,  nk_f_guess, delta_weight = 0.1, tolerance = 1e-4, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
+def fit_spectra_nk_sqr(lamda_list, spectrum_list_generator, parameter_list_generator,  nk_f_guess, delta_weight = 0.1, k_weight_fraction = 1.0, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
 	'''n_front and n_back must be real valued for this to work without caveats.
 thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
 
@@ -279,7 +279,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 		delta_array = diff(c_nk_list)*abs_delta_weight
 
-		error_list = error_list + list(delta_array.real) + list(delta_array.imag)
+		error_list = error_list + list(delta_array.real) + list(k_weight_fraction * delta_array.imag)
 
 		return error_list
 
@@ -364,7 +364,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 
 def fit_spectra_nk_sqr_KK_compliant(lamda_list, lamda_fine, spectrum_list_generator, parameter_list_generator,  nk_f_guess,
-								delta_weight = 0.1, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
+								delta_weight = 0.1, k_weight_fraction = 1.0, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
 	'''n_front and n_back must be real valued for this to work without caveats.
 thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
 
@@ -412,7 +412,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 			error_list = error_list + sub_error_list
 
 
-		error_list = error_list + list( abs_delta_weight*diff(n) )   + list( abs_delta_weight * diff(k))
+		error_list = error_list + list( abs_delta_weight*diff(n) )   + list( k_weight_fraction * abs_delta_weight * diff(k))
 
 		return error_list
 

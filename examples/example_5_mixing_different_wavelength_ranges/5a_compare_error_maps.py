@@ -48,7 +48,7 @@ if __name__=='__main__':
 	from basic_setup  import  spectrum_list_generator,   parameter_list_generator, lamda_min, lamda_max
 	film_thickness = 40.0
 	parameter_list_generator.thickness = film_thickness
-	
+
 	fit_nk_f =  functionize_nk_file(data_directory+'fit_nk_fine.txt', skiprows = 0)
 	lamda_list = loadtxt(data_directory+'fit_nk.txt' , unpack = True, usecols = [0])
 	lamda_fine = loadtxt(data_directory+'fit_nk_fine.txt' , unpack = True, usecols = [0])
@@ -88,6 +88,7 @@ if __name__=='__main__':
 	#coarse_lamda_list = arange(min(lamda_fine),max(lamda_fine)+.0001, 50) # fixed spacing
 	dlamda = 100.0
 	coarse_lamda_list = arange( ceil(lamda_min/dlamda)*dlamda, floor(lamda_max/dlamda)*dlamda + dlamda/2.0, dlamda)
+	#coarse_lamda_list = [370, 1300] # or you can force specific Wavelength points
 	for lamda in coarse_lamda_list:
 		print('lambda:',lamda)
 
