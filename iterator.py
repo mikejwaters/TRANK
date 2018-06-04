@@ -21,7 +21,7 @@ def error_adaptive_iterative_fit_spectra(
 			interpolate_to_fine_grid_at_end = True,
 			threads = 0,
 			delete_low_error_points = False,
-			for_delete_max_points = 30,
+			max_points = 30,
 			zero_weight_extra_pass = False, data_directory ='TRANK_nk_fit/', method = 'least_squares', verbose = True, write_nk_files = True,
 			make_plots = True, show_plots = True, nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' ):
 
@@ -200,8 +200,8 @@ def error_adaptive_iterative_fit_spectra(
 
 		############ adaptation
 		if delete_low_error_points:
-			if ( (num_new_points + len(lamda_list)) > for_delete_max_points):
-				n_delete = num_new_points+len(lamda_list) - for_delete_max_points
+			if ( (num_new_points + len(lamda_list)) > max_points):
+				n_delete = num_new_points+len(lamda_list) - max_points
 				sorted_indices =  argsort(adaptation_spectrum)
 				sorted_indices_without_edge_values = list(sorted_indices)
 				sorted_indices_without_edge_values.remove(0)
