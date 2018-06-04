@@ -75,6 +75,21 @@ def functionize_frequency_and_permittivity_file(file_name, skiprows = 0, kind = 
 
 
 
+def compute_coarse_and_fine_grid(dlamda_max, dlamda_min, lamda_max, lamda_min):
+	from numpy import  log2, ceil, linspace
+
+	ncoarse = ceil((lamda_max - lamda_min)/dlamda_max)
+	dlamda_max =  (lamda_max - lamda_min)/ncoarse
+	lamda_list = linspace(lamda_min,  lamda_max, ncoarse+1)
+	#print(lamda_list)
+	power_of_2 = int(round( log2(dlamda_max/dlamda_min) ))
+	#print(log2(dlamda_max/dlamda_min), power_of_2)
+	dlamda_min = dlamda_max/(2**power_of_2)
+	lamda_fine = linspace(lamda_min,  lamda_max, ncoarse*(2**power_of_2)+1)
+
+	return lamda_list, lamda_fine
+
+
 
 def nk_plot( nkf, lamda_fine, lamda_list = [], title_string = '', file_name = 'nk.pdf', show_nodes = False, zoom_window = [], show_plots = False):
 
