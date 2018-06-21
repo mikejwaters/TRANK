@@ -188,13 +188,41 @@ def error_adaptive_iterative_fit_spectra(
 		else:
 			adaptation_spectrum = rms_spectrum
 
-		#### we combine the new points with the old at the start of the next pass
-		new_lamda_list = []
-		for i in range(len(lamda_list)-1):
-			if (adaptation_spectrum[i] > adaptation_threshold) or (adaptation_spectrum[i+1] > adaptation_threshold): # should we refine?
+
+		refinement_method = 'interpolate_and_check_all'
+		#### with our adaptation selection method set, we find new points
+		if refinement_method == 'near_worst':
+			new_lamda_list = []
+			for i in range(len(lamda_list)-1):
+				if (adaptation_spectrum[i] > adaptation_threshold) or (adaptation_spectrum[i+1] > adaptation_threshold): # should we refine?
+					if (lamda_list[i+1] - lamda_list[i]) > dlamda_min: # if the gap is bigger than the minimum, then it is allowed to refine
+						new_lamda = (lamda_list[i]+lamda_list[i+1])/2.0
+						new_lamda_list.append( new_lamda)
+
+		elif refinement_method == 'interpolate_and_check_all':
+			test_lamda_list = []
+			for i in range(len(lamda_list)-1):
 				if (lamda_list[i+1] - lamda_list[i]) > dlamda_min: # if the gap is bigger than the minimum, then it is allowed to refine
-					new_lamda = (lamda_list[i]+lamda_list[i+1])/2.0
-					new_lamda_list.append( new_lamda)
+					test_lamda_list.append(  (lamda_list[i]+lamda_list[i+1])/2.0 )
+
+			if use_reducible_error :
+				test_error_spectrum, test_irreducible_error_spectrum = reducible_rms_error_spectrum(
+			 						lamda_list = test_lamda_list,
+									nk_f = fit_nk_f,
+									spectrum_list_generator = spectrum_list_generator,
+									parameter_list_generator = parameter_list_generator, threads = threads)
+			else:
+				test_error_spectrum = rms_error_spectrum(lamda_list = test_lamda_list,
+									nk_f = fit_nk_f,
+									spectrum_list_generator = spectrum_list_generator,
+									parameter_list_generator = parameter_list_generator, threads = threads)
+			#sorted_indices =  argsort(test_error_spectrum)
+			new_lamda_list = []
+			for i in range(len(test_lamda_list)):
+				if (test_error_spectrum[i] > adaptation_threshold) :
+					new_lamda_list.append( test_lamda_list[i])
+
+		#### we combine the new points with the old at the start of the next pass
 		### this is important to have here for the termination condition
 		num_new_points = len(new_lamda_list)
 
