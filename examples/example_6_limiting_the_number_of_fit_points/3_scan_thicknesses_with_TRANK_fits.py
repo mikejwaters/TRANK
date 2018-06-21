@@ -69,10 +69,12 @@ if __name__=='__main__':
 				adaptation_threshold_max = 0.05, adaptation_threshold_min = adaptation_threshold_min,
 				use_reducible_error = True,
 				method='least_squares',
-				KK_compliant = True, max_passes = 1, # <------ one pass with KK on to precondition
+				KK_compliant = True, max_passes = 3, # <------ one pass with KK on to precondition
 				reuse_mode = False,
 				zero_weight_extra_pass = False,
 				data_directory = data_directory,
+				delete_low_error_points = True,
+				max_points = max_points,
 				verbose = True, make_plots = True, show_plots = show_plots, interpolate_to_fine_grid_at_end = False,
 				nk_spectrum_file_format =  'KK_precondition_nk_pass_%i.pdf',
 				rms_spectrum_file_format = 'KK_precondition_rms_spectrum_pass_%i.pdf' )

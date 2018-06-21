@@ -22,14 +22,12 @@ if __name__=='__main__':
 
 	from numpy import arange, loadtxt, sqrt, mean, array
 
-	dlamda_min = 5
-	dlamda_max = 100 # 30 works, can we go higher?
-	#lamda_min = 400
-	#lamda_max = 1000
+	dlamda_min = 5 # 5 is the default
+	dlamda_max = 80 #
 	delta_weight = 0.2/dlamda_min # 0.1 for scan
 	film_thickness = 24.0
 
-	max_points = 20
+	max_points = 20 # 20
 	max_passes = 10
 
 	def fit_nk_f(lamda):
@@ -52,12 +50,14 @@ if __name__=='__main__':
 				lamda_max = lamda_max,
 				dlamda_min = dlamda_min,
 				dlamda_max = dlamda_max,
-				delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'cubic',
+				delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'linear',
 				adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.002,
 				use_reducible_error = True,
 				method = method,
 				KK_compliant = True,
-				max_passes = 5,
+				max_passes = 10, # was 5
+				delete_low_error_points = True,
+				max_points = max_points,
 				reuse_mode = False, lamda_list = [],
 				zero_weight_extra_pass = False,
 				verbose = True, make_plots = True, show_plots = show_plots, interpolate_to_fine_grid_at_end = False,

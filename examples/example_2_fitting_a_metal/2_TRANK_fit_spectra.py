@@ -100,7 +100,7 @@ if __name__=='__main__':
 					delta_weight = delta_weight, tolerance = 1e-5, interpolation_type = 'cubic',
 					adaptation_threshold_max = adaptation_threshold_max, adaptation_threshold_min = adaptation_threshold_min,
 					use_reducible_error = True,
-					max_passes = 1,
+					max_passes = 4,
 					method='least_squares',
 					KK_compliant = True,
 					reuse_mode = use_old_nk, lamda_list = old_lamda,
