@@ -19,17 +19,25 @@ def extrap(lamda, n, kind = 'linear'):
 	'''Requires that lamda be in increasing order'''
 	upper_value = n[-1]
 	lower_value = n[0]
-	from scipy.interpolate import interp1d
-	interp1d.upper_bound = 0.0
-	interp1d.lower_bound = 0.0
+	from scipy.interpolate import interp1d, BSpline
 	def is_in_bounds(self,lamda):
 		if (self.lower_bound <= lamda) and (lamda <= self.upper_bound):
 			return True
 		else:
 			return False
-	interp1d.is_in_bounds = is_in_bounds
+
 	# now we instantiate
-	func = interp1d(lamda, n, kind=kind, bounds_error = False, fill_value = (lower_value, upper_value))
+	if kind != 'cubic_bspline':
+		interp1d.upper_bound = 0
+		interp1d.lower_bound = 0
+		interp1d.is_in_bounds = is_in_bounds
+		func = interp1d(lamda, n, kind=kind, bounds_error = False, fill_value = (lower_value, upper_value))
+	else:
+		BSpline.upper_bound = 0
+		BSpline.lower_bound = 0
+		BSpline.is_in_bounds = is_in_bounds
+		func = BSpline(lamda, n, k = 3, extrapolate = True)
+
 	func.upper_bound = max(lamda)
 	func.lower_bound = min(lamda)
 	return func

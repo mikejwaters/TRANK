@@ -28,6 +28,7 @@ def error_adaptive_iterative_fit_spectra(
 
 	from TRANK import (fit_spectra_nk_sqr, fit_spectra_nk_sqr_KK_compliant,
 						rms_error_spectrum, reducible_rms_error_spectrum, nk_plot, error_plot, try_mkdir)
+	from TRANK import compute_coarse_and_fine_grid
 	from time import time
 	from numpy import floor, log2, ceil, linspace, diff, sqrt, mean, array, savetxt, percentile, argsort
 	from copy import deepcopy
@@ -37,7 +38,6 @@ def error_adaptive_iterative_fit_spectra(
 		from matplotlib.pylab import show
 
 	if reuse_mode == False: #picks lambda points accordingly
-		from TRANK import compute_coarse_and_fine_grid
 		lamda_list, lamda_fine = compute_coarse_and_fine_grid(dlamda_max, dlamda_min, lamda_max, lamda_min)
 		dlamda_min = lamda_fine[1]-lamda_fine[0]
 		dlamda_max = lamda_list[1]-lamda_list[0]
@@ -51,19 +51,14 @@ def error_adaptive_iterative_fit_spectra(
 
 
 	else:
-
+		lamda_coarse, lamda_fine = compute_coarse_and_fine_grid(dlamda_max, dlamda_min, lamda_max, lamda_min)
 		# Determines the fine grid based on the smallest delta lambda you have
 		dlamda_min_found = min(diff(lamda_list))
 		power_of_2 = int(round( log2(dlamda_min_found/dlamda_min) ))
 		#print( log2(dlamda_min_found/dlamda_min)  )
-		dlamda_min = dlamda_min_found/(2**power_of_2) # finds power of two spacing to match your dlamda_min
-
-		### use what we find
-		dlamda_max = dlamda_max_found = max(diff(lamda_list))
-
-		nfine = ceil((lamda_max - lamda_min)/dlamda_min)
-		lamda_fine = linspace(lamda_min,  lamda_max, nfine+1)
-		#print ('lamda_fine', lamda_fine)
+		if False: # in the past it made sense to retrive the dlamda_min and max from data
+			dlamda_min = dlamda_min_found/(2**power_of_2) # finds power of two spacing to match your dlamda_min
+			dlamda_max = dlamda_max_found = max(diff(lamda_list))
 
 		if max_passes == 0:
 			# this part guesses how many passes are required to reach the finest grid level
@@ -172,7 +167,7 @@ def error_adaptive_iterative_fit_spectra(
 							adaptation_threshold_max = adaptation_threshold_max,
 							reducible_error_spectrum = reducible_error_spectrum,
 							file_name = data_directory + rms_spectrum_file_format % pass_number,
-							title_string = 'Pass %i: Net RMS Error = %.3f %%' %( pass_number, net_rms*100),
+							title_string = 'Pass %i\nNon-Uniform RMS Error = %.3f %%\nUniform Fine RMS Error = %.3f %%' %( pass_number, net_rms*100, net_rms_fine*100),
 							show_plots = show_plots )
 
 			nk_fig = nk_plot(lamda_list = lamda_list, lamda_fine = lamda_fine, nkf = fit_nk_f,
@@ -189,7 +184,7 @@ def error_adaptive_iterative_fit_spectra(
 			adaptation_spectrum = rms_spectrum
 
 
-		refinement_method = 'interpolate_and_check_all'
+		refinement_method = 'near_worst'
 		#### with our adaptation selection method set, we find new points
 		if refinement_method == 'near_worst':
 			new_lamda_list = []
@@ -231,9 +226,17 @@ def error_adaptive_iterative_fit_spectra(
 			if ( (num_new_points + len(lamda_list)) > max_points):
 				n_delete = num_new_points+len(lamda_list) - max_points
 				sorted_indices =  argsort(adaptation_spectrum)
+				### remove edge indices
 				sorted_indices_without_edge_values = list(sorted_indices)
 				sorted_indices_without_edge_values.remove(0)
 				sorted_indices_without_edge_values.remove(len(adaptation_spectrum)-1)
+
+				# now we remove any that would make a gap that is too large
+				for index_index in range(len(sorted_indices_without_edge_values)-1,-1,-1):
+					index_to_check = sorted_indices_without_edge_values[index_index]
+					if (lamda_list[index_to_check+1] - lamda_list[index_to_check-1]) > dlamda_max:
+						 del sorted_indices_without_edge_values[index_index] # we can't consider it, would make a large gap
+
 				indicies_to_delete  = sorted_indices_without_edge_values[0:n_delete]
 				indicies_to_delete.sort(reverse = True)
 
