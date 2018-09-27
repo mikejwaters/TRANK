@@ -16,21 +16,24 @@ from .TRANK_lib import (fit_spectra_nk_sqr,
 						single_lamda_rms_error_map,
 						find_min_indices_2d_array )
 
+from .KK_lib import (dual_grid_direct_KK_n_from_lamda_k, DKKT_n_from_lamda_k,
+					parallel_DKKT_n_from_lamda_k,
+					upper_bound_extrapolation_order_0, upper_bound_extrapolation_order_1, parallel_DKKT_n_from_lamda_k_with_edge_corrections)
+
+from .helpers import (extrap, extrap_c, functionize_nk_file, functionize_frequency_and_permittivity_file, try_mkdir, nk_plot, error_plot, compute_coarse_and_fine_grid)
+from .iterator import error_adaptive_iterative_fit_spectra, scan_for_scaled_weight_crossover
+
+
+
+
+
+
 from .NKT_lib import ( NKT_fit_spectra_nk_sqr, NKT_fit_spectra_nk_sqr_KK_compliant, NKT_rms_error_spectrum, NKT_reducible_rms_error_spectrum)
 from .NKT_iterator import ( NKT_error_adaptive_iterative_fit_spectra)
 
 
 
-from .KK_lib import (dual_grid_direct_KK_n_from_lamda_k, DKKT_n_from_lamda_k,
-					parallel_DKKT_n_from_lamda_k,
-					upper_bound_extrapolation_order_0, upper_bound_extrapolation_order_1, parallel_DKKT_n_from_lamda_k_with_edge_corrections)
-
-
-from .helpers import (extrap, extrap_c, functionize_nk_file, functionize_frequency_and_permittivity_file, try_mkdir, nk_plot, error_plot, compute_coarse_and_fine_grid)
-
 from .iterator import error_adaptive_iterative_fit
-from .iterator import error_adaptive_iterative_fit_spectra
-
 
 
 

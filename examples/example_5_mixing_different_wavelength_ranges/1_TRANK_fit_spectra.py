@@ -25,7 +25,7 @@ if __name__=='__main__':
 	dlamda_min = 4
 	dlamda_max = 120
 	lamda_max = 1300
-	scaled_weight_crossover = 21.612856
+	scaled_weight_crossover =  21.612856
 	delta_weight = 2* scaled_weight_crossover/dlamda_max
 	print ('delta_weight:', delta_weight)
 	use_reducible_error = True
@@ -34,7 +34,7 @@ if __name__=='__main__':
 
 
 	def fit_nk_f(lamda):
-		return 2.0+0.05j+0.0*lamda
+		return 2.3+0.3j+0.0*lamda
 	### just for plotting
 	lamda_plot = arange(lamda_min, lamda_max + dlamda_min/2.0 , dlamda_min)
 	nk_plot(fit_nk_f,
@@ -60,13 +60,15 @@ if __name__=='__main__':
 				adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.001,
 				use_reducible_error = use_reducible_error,
 				method='least_squares',
+				use_free_drude = False,
 				KK_compliant = True,
-				max_passes = 1,
+				no_negative = False,
+				max_passes = 6,
 				reuse_mode = False,
 				zero_weight_extra_pass = False,
 				interpolate_to_fine_grid_at_end = False,
 				verbose = True, make_plots = True, show_plots = show_plots,
-				nk_spectrum_file_format = 'TRANK_nk_KK_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_KK_pass_%i.pdf' )
+				nk_spectrum_file_format = 'TRANK_nk_free_drude_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_free_drude_pass_%i.pdf' )
 
 
 	error_adaptive_iterative_fit_spectra(
@@ -87,4 +89,5 @@ if __name__=='__main__':
 				reuse_mode = True, lamda_list = lamda_list,
 				zero_weight_extra_pass = False,
 				verbose = True, make_plots = True, show_plots = show_plots,
+				interpolate_to_fine_grid_at_end = False,
 				nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' )

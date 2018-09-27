@@ -291,6 +291,146 @@ def error_adaptive_iterative_fit_spectra(
 
 
 
+def scan_for_scaled_weight_crossover(
+			nk_f_guess,
+			spectrum_list_generator,
+			parameter_list_generator,
+			lamda_min,
+			lamda_max,
+			n_points = 15,
+			initial_scaled_weight = 20,
+			step_multiplier = 0.4,
+			tolerance = 1e-4, k_weight_fraction = 1.0,
+			KK_compliant = False,
+			use_free_drude = False,
+			interpolation_type = 'cubic',
+			no_negative = False,
+			threads = 0,
+			data_directory ='TRANK_weight_scan/', method = 'least_squares', verbose = True, write_to_file = True,
+			make_plots = True, show_plots = False, rms_file_format = 'rms_vs_weight.pdf' ):
+
+	#simple tests seem to show 1e-4 is minimum presicion
+
+	from TRANK import (fit_spectra_nk_sqr, fit_spectra_nk_sqr_KK_compliant, fit_spectra_nk_sqr_drude_KK_compliant,
+						reducible_rms_error_spectrum,  try_mkdir)
+
+	from time import time
+	from numpy import floor, log2, ceil, linspace, diff, sqrt, mean, array, savetxt
+	def RMS(a):
+		return sqrt(mean(a**2))
+
+
+	if write_to_file or make_plots: try_mkdir(data_directory)
+
+
+	print('--> Fitting %i Points' % n_points)
+	lamda_list = linspace(lamda_min, lamda_max, n_points)
+	dlamda = lamda_list[1] - lamda_list[0]
+
+	fit_nk_f = nk_f_guess
+	lamda_tau, sigma_bar0, epsilon_f1p  =  0.0, 0.0, 0.0
+	scaled_weight = initial_scaled_weight
+	cross_over_found = False
+	log_data = []
+	while cross_over_found == False:
+
+		delta_weight = scaled_weight/dlamda
+
+		print('-----------> scaled_weight : %f ->  delta_weight  : %f' % (scaled_weight, delta_weight))
+
+		# here we build the inputs for the fitter
+		inputs = dict(lamda_list = lamda_list,
+					spectrum_list_generator = spectrum_list_generator,
+					parameter_list_generator = parameter_list_generator,
+					nk_f_guess = fit_nk_f,
+					delta_weight = delta_weight,
+					tolerance = tolerance,
+					no_negative = no_negative,
+					k_weight_fraction = k_weight_fraction,
+					interpolation_type = interpolation_type, method = method, threads = threads)
+
+		t0 = time()
+		if use_free_drude:
+			inputs.update(dict(	sigma_bar0_guess = sigma_bar0, lamda_tau_guess = lamda_tau, epsilon_f1p_guess = epsilon_f1p))
+			fit_nk_f, lamda_tau, sigma_bar0, epsilon_f1p  = fit_spectra_nk_sqr_drude_KK_compliant(**inputs)
+		else:
+			if KK_compliant:
+				#inputs.update(dict(lamda_fine = lamda_fine))
+				fit_nk_f = fit_spectra_nk_sqr_KK_compliant(**inputs ) # <-----
+			else:
+				fit_nk_f = fit_spectra_nk_sqr(**inputs)  # <----- # <-----
+		pass_time = time()-t0
+		print('Pass Time: %.1f seconds'%pass_time)
+
+
+		reducible_error_spectrum, irreducible_error_spectrum = reducible_rms_error_spectrum(
+		 						lamda_list = lamda_list,
+								nk_f = fit_nk_f,
+								spectrum_list_generator = spectrum_list_generator,
+								parameter_list_generator = parameter_list_generator, threads = threads)
+
+		rms_spectrum = sqrt(reducible_error_spectrum**2 + irreducible_error_spectrum**2)
+
+		net_rms     = RMS(rms_spectrum)
+		net_rms_irr = RMS(irreducible_error_spectrum)
+		net_rms_red = RMS(reducible_error_spectrum)
+		ratio       = net_rms_red/net_rms_irr
+
+		log_data.append( [scaled_weight, net_rms, net_rms_irr, net_rms_red, ratio])
+
+		print('--> Net RMS Error: %f %%' % (net_rms*100))
+		print('--> reducible/irreducible ratio %f' % (ratio))
+
+		if len(log_data) > 1:
+			if log_data[-1][4] < 1.0 and log_data[-2][4] > 1.0:  # decreasing case
+				cross_over_found = True
+			if log_data[-1][4] > 1.0 and log_data[-2][4] < 1.0:  # increasing case
+				cross_over_found = True
+
+		if cross_over_found == False: # actually don't need to do this check, but now we only update if we are still searching
+			if ratio > 1.0:
+				scaled_weight = scaled_weight* step_multiplier
+			else:
+				scaled_weight = scaled_weight/ step_multiplier
+
+
+	log_data = array(log_data).T
+	savetxt(data_directory+'rms_vs_scaled_weight.txt', log_data.T)
+
+	ratio_data = log_data[4]
+	scaled_weight_data = log_data[0]
+	#simple linear interpolation is fast, and we dont have to worry about https://en.wikipedia.org/wiki/Runge%27s_phenomenon
+	ratio_slope = ( ratio_data[-1] - ratio_data[-2] )/ (scaled_weight_data[-1] - scaled_weight_data[-2])
+	scaled_weight_crossover = ( 1 - ratio_data[-2]) / ratio_slope + scaled_weight_data[-2]
+
+
+
+	print('\n-----> scaled_weight_crossover estimated:  %f <-----\n' % scaled_weight_crossover)
+
+	if make_plots:
+
+		from matplotlib.pylab import plot, savefig, xlabel, figure, ylabel, legend
+		if False:
+			figure()
+			plot(log_data[0],log_data[1], label = 'net')
+			plot(log_data[0],log_data[2], label = 'irr')
+			plot(log_data[0],log_data[3], label = 'red')
+			legend()
+
+		figure()
+		plot(scaled_weight_data,ratio_data , marker = 'o' )
+		plot([scaled_weight_crossover],[1], marker = '+', label = 'scaled_weight_crossover')
+		xlabel('scaled_weight')
+		ylabel('reducible error:irreducible error ratio')
+		legend()
+
+		savefig(data_directory+ rms_file_format, transparent = True)
+
+		if show_plots:
+			from matplotlib.pylab import  show
+			show()
+
+	return scaled_weight_crossover
 
 
 
@@ -302,6 +442,17 @@ def error_adaptive_iterative_fit_spectra(
 
 
 
+
+
+
+
+
+
+
+
+
+
+##### depricated #####
 def error_adaptive_iterative_fit(
 			nk_f_guess,
 			TR_pair_list_generator,

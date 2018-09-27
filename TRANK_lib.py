@@ -360,7 +360,7 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 
 
-def fit_spectra_nk_sqr_KK_compliant(lamda_list, lamda_fine, spectrum_list_generator, parameter_list_generator,  nk_f_guess,
+def fit_spectra_nk_sqr_KK_compliant(lamda_list,  spectrum_list_generator, parameter_list_generator,  nk_f_guess,
 								delta_weight = 0.1, k_weight_fraction = 1.0, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
 	'''n_front and n_back must be real valued for this to work without caveats.
 thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
