@@ -1,7 +1,7 @@
 
 
 from tmm import inc_tmm
-from numpy import sqrt
+from numpy import sqrt, array
 
 
 def TMM_spectrum_wrapper(nk_fit, lamda, snell_angle_front, layer_index_of_fit,  nk_f_list,  thickness_list, coherency_list, tm_polarization_fraction, spectrum): #this is just a fancy wrapper for inc_tmm
@@ -157,8 +157,10 @@ def pointwise_reducible_rms_error_sum_wrapper(params): # for each Wavelength, wr
 		#if reducible_error < 0.0:
 		#	print( params[0], det(hessian), S_change, [reducible_error, irreducible_error])
 	else: # what else should i do here, I assume it means the band is caught on a peak?
-		irreducible_error = e_0_0
-		reducible_error = 0.0
+		#irreducible_error = e_0_0
+		#reducible_error = 0.0
+		irreducible_error = 0.0
+		reducible_error =  e_0_0
 		#print( params[0], det(hessian), [reducible_error, irreducible_error])
 
 	return [reducible_error, irreducible_error]
@@ -288,16 +290,11 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	nk_guess_list = []
 	for i in range(len(lamda_list)):
 		nk = nk_f_guess(lamda_list[i])
-		if no_negative:
-			n = nk.real
-			k = nk.imag
-			if n < 0.0 : n = 0.0
-			if k < 0.0 : k = 0.0
-			nk_guess_list.append(n)
-			nk_guess_list.append(k)
-		else:
-			nk_guess_list.append(nk.real)
-			nk_guess_list.append(nk.imag)
+		n, k = nk.real, nk.imag
+		if no_negative and k < 0.0: k = 0
+		if no_negative and n < 0.0: n = 0
+		nk_guess_list.append(n)
+		nk_guess_list.append(k)
 
 
 	######### test
@@ -369,7 +366,7 @@ def fit_spectra_nk_sqr_KK_compliant(lamda_list, lamda_fine, spectrum_list_genera
 thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
 
 
-	from numpy import pi,exp,abs,sqrt, array, matmul, loadtxt, zeros, savetxt, inf, diff, ones, mean
+	from numpy import pi,exp,abs,sqrt, array, matmul, loadtxt, zeros, savetxt, inf, diff, ones, mean, trapz
 	from scipy.optimize import root, least_squares, minimize
 	from TRANK import extrap
 	#from TRANK import parallel_DKKT_n_from_lamda_k as KKT
@@ -419,18 +416,18 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 	####### now for a guess list ##############
 
 	guess_k_and_p_list= []
-	p = 0.0
+	n_list = []
 	for i in range(len(lamda_list)):
 		nk = nk_f_guess(lamda_list[i])
-		if no_negative and nk.imag < 0.0:
-			k = 0
-		else:
-			k = nk.imag
+		n, k = nk.real, nk.imag
+		if no_negative and k < 0.0: k = 0
+		if no_negative and n < 0.0: n = 0
+
 
 		guess_k_and_p_list.append( k)
-		p+= nk.real
+		n_list.append(n)
 	# now we put p at the end
-	p = p/len(lamda_list)    # this is a guess for the principle value
+	p = trapz(n_list, lamda_list)/(lamda_list[-1] - lamda_list[0])   # this is a guess for the principle value
 	print ('principle value guess:',p)
 	guess_k_and_p_list.append(p)
 
@@ -502,6 +499,210 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 
 
+def epsilon_d_to_nk_function(lamda_list, sigma_bar0, lamda_tau, interpolation_type = 'cubic'):
+	epsilon_d = -sigma_bar0 *(lamda_list**2/( 1.0j*lamda_list + lamda_tau ))
+	epsilon_abs = sqrt(epsilon_d * epsilon_d.conjugate())
+	n_d = sqrt((epsilon_abs + epsilon_d.real)/2.0).real
+	k_d = sqrt((epsilon_abs - epsilon_d.real)/2.0).real
+	from TRANK import extrap
+	nk_d_f = extrap(lamda_list, n_d + 1.0j*k_d, kind = interpolation_type)
+	return nk_d_f
+
+def fit_spectra_nk_sqr_drude_KK_compliant(lamda_list, spectrum_list_generator, parameter_list_generator,  nk_f_guess, sigma_bar0_guess = 0.0, lamda_tau_guess = 0.0, epsilon_f1p_guess = 0.0,
+								delta_weight = 0.1, k_weight_fraction = 1.0, tolerance = 1e-5, no_negative = True, interpolation_type = 'cubic', method = 'least_squares', threads = 0):
+	'''n_front and n_back must be real valued for this to work without caveats.
+thickness and lambda can be any units, so long as they are the same, lamda_list must be sorted'''
+
+
+	from numpy import pi,exp,abs,sqrt, array, matmul, loadtxt, zeros, savetxt, inf, diff, ones, mean, trapz
+	from scipy.optimize import root, least_squares, minimize
+	from TRANK import extrap
+	#from TRANK import parallel_DKKT_n_from_lamda_k as KKT
+	from TRANK import parallel_DKKT_n_from_lamda_k_with_edge_corrections as KKT
+	from TRANK import spectrum_lamda_error
+
+
+
+	abs_delta_weight = sqrt(delta_weight**2  * (len(lamda_list)/(len(lamda_list)-1.0)))
+
+	from multiprocessing import Pool, cpu_count
+	if threads <= 0:
+		threads = cpu_count()
+	my_pool = Pool(threads)
+	print ('Using %i Threads' % threads)
+
+	lamda_list = array(lamda_list)
+
+	def F_error(epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list):
+		# the last values are the principle value
+		epsilon_f2  = epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list[0:-3]
+		epsilon_f1p = epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list[-3]
+		lamda_tau   = epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list[-2]
+		sigma_bar0  = epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list[-1]
+
+		epsilon_f1 = epsilon_f1p + KKT(lamda_list = lamda_list, k = epsilon_f2, compute_pool = my_pool )
+		epsilon_f  = epsilon_f1 + 1.0j*epsilon_f2
+
+		epsilon_d = -sigma_bar0 *(lamda_list**2/( 1.0j*lamda_list + lamda_tau ))
+		epsilon   = epsilon_f + epsilon_d
+
+		epsilon_abs = sqrt(epsilon*epsilon.conjugate())
+		n = sqrt((epsilon_abs + epsilon.real)/2.0).real
+		k = sqrt((epsilon_abs - epsilon.real)/2.0).real # since we are casting the imaginary part as real
+
+		muh_inputs = []
+		for i in range(len(lamda_list)):
+			nk = n[i]+1.0j*k[i]# double check this works properly later
+
+			muh_inputs.append( (lamda_list[i], nk, spectrum_list_generator, parameter_list_generator ) )
+
+		#print (zip(lamda_list, c_nk_list))
+		error_list_lists = my_pool.map(spectrum_lamda_error, muh_inputs)
+		#error_list_lists =my_pool.map(lamda_error, zip(lamda_list, c_nk_list))
+		#print (error_list_lists)
+
+		error_list = []
+		for sub_error_list in error_list_lists:
+			error_list = error_list + sub_error_list
+
+		only_penalize_free = True
+		if only_penalize_free:
+			epsilon_f_abs = sqrt(epsilon_f.conjugate() * epsilon_f)
+			n_f = sqrt((epsilon_f_abs + epsilon_f1)/2.0).real
+			k_f = sqrt((epsilon_f_abs - epsilon_f1)/2.0).real # since we are casting the imaginary part as real
+
+			error_list = error_list + list( abs_delta_weight*diff(n_f) )   + list( k_weight_fraction * abs_delta_weight * diff(k_f))
+		else:
+			error_list = error_list + list( abs_delta_weight*diff(n) )   + list( k_weight_fraction * abs_delta_weight * diff(k))
+
+		return error_list
+
+	####### now for a guess list ##############
+
+	nk_d_f = epsilon_d_to_nk_function(lamda_list, sigma_bar0_guess, lamda_tau_guess, interpolation_type = 'cubic')
+
+	epsilon_f2_list = []
+	epsilon_f1_list = []
+	for i in range(len(lamda_list)):
+		nk = nk_f_guess(lamda_list[i])
+		n, k  = nk.real, nk.imag
+
+		nk_d = nk_d_f(lamda_list[i])
+		n_d, k_d = nk_d.real, nk_d.imag
+
+		if no_negative:
+			if n < 0.0:	n = 0
+			if k < 0.0:	k = 0
+
+		epsilon_f1_list.append( (n**2 - k**2) - (n_d**2 - k_d**2) ) # subtracting the drude component
+		epsilon_f2 = 2*n*k - 2*n_d*k_d
+		if no_negative and epsilon_f2 < 0.0: epsilon_f2 = 0.0
+		epsilon_f2_list.append( epsilon_f2)
+
+	if epsilon_f1p_guess == 0.0:
+		epsilon_f1p = trapz(epsilon_f1_list, lamda_list)/(lamda_list[-1] - lamda_list[0])
+	else:
+		epsilon_f1p = epsilon_f1p_guess
+
+	if sigma_bar0_guess == 0.0:
+		from numpy import polyfit
+		sigma_bar0  = polyfit(lamda_list, epsilon_f2_list, 1)[0]
+	else:
+		sigma_bar0 = sigma_bar0_guess
+
+	if lamda_tau_guess == 0.0:
+		lamda_tau   = max(lamda_list)*10
+	else:
+		lamda_tau = lamda_tau_guess
+
+	if no_negative:
+		if sigma_bar0 < 0.0: sigma_bar0 = 0
+		if lamda_tau < 0.0:  lamda_tau = 0
+
+	guess_epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list = array( epsilon_f2_list + [epsilon_f1p] + [lamda_tau] + [sigma_bar0 ] )
+	print ('epsilon_f1p (principle value) guess:',epsilon_f1p)
+	print ('lambda_tau guess:                   ',lamda_tau)
+	print ('sigma_bar0 guess:                   ',sigma_bar0)
+
+
+	######### test
+	if False: print(F_error(guess_epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list)) #use this to see if the TR_error works
+	############ nk guessing over, time for creating and minimizing error function
+
+	if method == 'least_squares':
+		inputs = dict(fun = F_error,
+					x0 =  guess_epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list,
+					ftol = tolerance,
+					xtol = tolerance,
+					gtol = tolerance,
+					verbose = 2)
+		if no_negative:
+			inputs.update(dict( bounds = [len(lamda_list)*[0.0]+[-inf]+[0.0]+[0.0], len(lamda_list)*[inf]+[inf]+[inf]+[inf]] ))
+		solution = least_squares(**inputs ).x
+
+	elif method == 'SLSQP':
+		inputs = dict(fun = lambda x: 0.5*sum(array(F_error(x))**2),
+				x0 = guess_epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list,
+				method = 'SLSQP',
+				tol = tolerance,
+				options = {'disp' : True, 'iprint': 2}  )
+		if no_negative:
+			inputs.update(dict( bounds = len(lamda_list)*[(0,inf)]  + [(-inf,inf), (0,inf), (0,inf)] ))
+		solution = minimize(**inputs ).x
+
+	elif method == 'L-BFGS-B':
+		inputs = dict(fun = lambda x: 0.5*sum(array(F_error(x))**2),
+				x0 = guess_epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list,
+				method = 'L-BFGS-B',
+				tol = tolerance,
+				options = {'disp' : True, 'iprint': 2}  )
+		if no_negative:
+			inputs.update(dict( bounds = len(lamda_list)*[(0,inf)]  + [(-inf,inf), (0,inf), (0,inf)]  ))
+		solution = minimize(**inputs ).x
+
+	elif method == 'TNC':
+		inputs = dict(fun = lambda x: 0.5*sum(array(F_error(x))**2),
+				x0 = guess_epsilonf2_epsilonf1p_lamdatau_and_sigmabar0_list,
+				method = 'TNC',
+				tol = tolerance,
+				options = {'disp' : True, 'iprint': 2}  )
+		if no_negative:
+			inputs.update(dict( bounds = len(lamda_list)*[(0,inf)]  + [(-inf,inf), (0,inf), (0,inf)]  ))
+		solution = minimize(**inputs ).x
+
+	else:
+		raise ValueError("Invalid minimization method!")
+
+	##### now for unpacking
+
+	epsilon2_epsilon1p_lamdatau_and_sigmabar0_list = solution
+
+	epsilon_f2  = epsilon2_epsilon1p_lamdatau_and_sigmabar0_list[0:-3]
+	epsilon_f1p = epsilon2_epsilon1p_lamdatau_and_sigmabar0_list[-3]
+	lamda_tau   = epsilon2_epsilon1p_lamdatau_and_sigmabar0_list[-2]
+	sigma_bar0  = epsilon2_epsilon1p_lamdatau_and_sigmabar0_list[-1]
+
+	epsilon_f1 = epsilon_f1p + KKT(lamda_list = lamda_list, k = epsilon_f2, compute_pool = my_pool )
+	epsilon_f  = epsilon_f1 + 1.0j*epsilon_f2
+
+	epsilon_d = -sigma_bar0 *(lamda_list**2/( 1.0j*lamda_list + lamda_tau ))
+	epsilon   = epsilon_f + epsilon_d
+
+	epsilon_abs = sqrt(epsilon*epsilon.conjugate())
+	n = sqrt((epsilon_abs + epsilon.real)/2.0)
+	k = sqrt((epsilon_abs - epsilon.real)/2.0)
+
+	print ('Final epsilon_f1p (principle value):',epsilon_f1p)
+	print ('Final lambda_tau                   :',lamda_tau)
+	print ('Final sigma_bar0 value             :',sigma_bar0)
+
+
+	fit_nk_f = extrap(lamda_list, n + 1.0j*k, kind = interpolation_type)
+
+	my_pool.terminate()
+	my_pool.close()
+
+	return fit_nk_f, lamda_tau, sigma_bar0, epsilon_f1p
 
 
 
@@ -524,6 +725,16 @@ thickness and lambda can be any units, so long as they are the same, lamda_list 
 
 
 
+
+
+
+
+
+
+
+
+
+######## these are depricated #######
 
 
 def TR(nk_fit, lamda, snell_angle_front, layer_index_of_fit,  nk_f_list,  thickness_list, coherency_list, tm_polarization_fraction): #this is just a fancy wrapper for inc_tmm

@@ -16,6 +16,7 @@ def error_adaptive_iterative_fit_spectra(
 			use_reducible_error = True,
 			reuse_mode = False,
 			KK_compliant = False,
+			use_free_drude  = False,
 			interpolation_type = 'cubic',
 			no_negative = True,
 			interpolate_to_fine_grid_at_end = True,
@@ -26,7 +27,7 @@ def error_adaptive_iterative_fit_spectra(
 			make_plots = True, show_plots = True, nk_spectrum_file_format = 'TRANK_nk_pass_%i.pdf', rms_spectrum_file_format = 'rms_spectrum_pass_%i.pdf' ):
 
 
-	from TRANK import (fit_spectra_nk_sqr, fit_spectra_nk_sqr_KK_compliant,
+	from TRANK import (fit_spectra_nk_sqr, fit_spectra_nk_sqr_KK_compliant, fit_spectra_nk_sqr_drude_KK_compliant,
 						rms_error_spectrum, reducible_rms_error_spectrum, nk_plot, error_plot, try_mkdir)
 	from TRANK import compute_coarse_and_fine_grid
 	from time import time
@@ -73,8 +74,10 @@ def error_adaptive_iterative_fit_spectra(
 
 	fit_nk_f = nk_f_guess
 
-	print ('dlamda_max:',dlamda_max )
-	print ('dlamda_min:',dlamda_min )
+	print ('dlamda_max:  ' ,dlamda_max )
+	print ('dlamda_min:  ', dlamda_min )
+	print ('delta_weight:', delta_weight)
+	lamda_tau, sigma_bar0, epsilon_f1p  =  0.0, 0.0, 0.0
 
 	# literally jury rigging the conidtion so it starts the loop, ugly, but cleaner than the alternatives
 	num_new_points = len(lamda_list)
@@ -114,12 +117,17 @@ def error_adaptive_iterative_fit_spectra(
 					k_weight_fraction = k_weight_fraction,
 					interpolation_type = interpolation_type, method = method, threads = threads)
 
+		# now we use the inputs
 		t0 = time()
-		if KK_compliant:
-			inputs.update(dict(lamda_fine = lamda_fine))
-			fit_nk_f = fit_spectra_nk_sqr_KK_compliant(**inputs ) # <-----
+		if use_free_drude:
+			inputs.update(dict(	sigma_bar0_guess = sigma_bar0, lamda_tau_guess = lamda_tau, epsilon_f1p_guess = epsilon_f1p))
+			fit_nk_f, lamda_tau, sigma_bar0, epsilon_f1p  = fit_spectra_nk_sqr_drude_KK_compliant(**inputs)
 		else:
-			fit_nk_f = fit_spectra_nk_sqr(**inputs)  # <-----
+			if KK_compliant:
+				#inputs.update(dict(lamda_fine = lamda_fine))
+				fit_nk_f = fit_spectra_nk_sqr_KK_compliant(**inputs ) # <-----
+			else:
+				fit_nk_f = fit_spectra_nk_sqr(**inputs)  # <-----
 		pass_time = time()-t0
 
 		total_iteration_time += pass_time

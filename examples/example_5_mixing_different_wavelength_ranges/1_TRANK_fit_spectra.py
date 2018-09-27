@@ -23,16 +23,18 @@ if __name__=='__main__':
 	from numpy import arange, loadtxt, sqrt, mean, array
 
 	dlamda_min = 4
-	dlamda_max = 50
+	dlamda_max = 120
 	lamda_max = 1300
-	delta_weight = 0.2/dlamda_min
+	scaled_weight_crossover = 21.612856
+	delta_weight = 2* scaled_weight_crossover/dlamda_max
+	print ('delta_weight:', delta_weight)
 	use_reducible_error = True
 
 
 
 
 	def fit_nk_f(lamda):
-		return 2.0+0.5j+0.0*lamda
+		return 2.0+0.05j+0.0*lamda
 	### just for plotting
 	lamda_plot = arange(lamda_min, lamda_max + dlamda_min/2.0 , dlamda_min)
 	nk_plot(fit_nk_f,
@@ -53,13 +55,13 @@ if __name__=='__main__':
 				lamda_max = lamda_max,
 				dlamda_min = dlamda_min,
 				dlamda_max = dlamda_max,
-				delta_weight = delta_weight, k_weight_fraction = 0.25,
+				delta_weight = delta_weight, k_weight_fraction = 1.0,
 				tolerance = 1e-5, interpolation_type = 'linear',
 				adaptation_threshold_max = 0.05, adaptation_threshold_min = 0.001,
 				use_reducible_error = use_reducible_error,
 				method='least_squares',
 				KK_compliant = True,
-				max_passes = 4,
+				max_passes = 1,
 				reuse_mode = False,
 				zero_weight_extra_pass = False,
 				interpolate_to_fine_grid_at_end = False,
