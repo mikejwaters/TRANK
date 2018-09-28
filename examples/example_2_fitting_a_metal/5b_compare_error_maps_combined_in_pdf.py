@@ -50,6 +50,8 @@ if __name__=='__main__':
 	fit_nk_f =  functionize_nk_file( data_directory+'fit_nk_fine.txt', skiprows = 0)
 	lamda_list = loadtxt(data_directory+'fit_nk.txt' , unpack = True, usecols = [0])
 	lamda_fine = loadtxt(data_directory+'fit_nk_fine.txt' , unpack = True, usecols = [0])
+	lamda_min = lamda_list.min()
+	lamda_max = lamda_list.max()
 
 	rms_error_fine = rms_error_spectrum(lamda_list = lamda_fine, nk_f = fit_nk_f,
 										spectrum_list_generator = spectrum_list_generator,

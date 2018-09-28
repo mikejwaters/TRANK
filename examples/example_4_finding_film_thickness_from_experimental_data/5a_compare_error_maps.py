@@ -49,6 +49,8 @@ if __name__=='__main__':
 	fit_nk_f =  functionize_nk_file(data_directory+'fit_nk_fine.txt', skiprows = 0)
 	lamda_list = loadtxt(data_directory+'fit_nk.txt' , unpack = True, usecols = [0])
 	lamda_fine = loadtxt(data_directory+'fit_nk_fine.txt' , unpack = True, usecols = [0])
+	lamda_min = lamda_list.min()
+	lamda_max = lamda_list.max()
 
 	rms_error_fine = rms_error_spectrum(lamda_list = lamda_fine, nk_f = fit_nk_f,
 										spectrum_list_generator = spectrum_list_generator,
@@ -81,9 +83,10 @@ if __name__=='__main__':
 	#klist = arange(kmin, kmax+dk/2.0, dk)
 
 
-	coarse_lamda_list = lamda_list # uses the spacing of mesh points
+	#coarse_lamda_list = lamda_list # uses the spacing of mesh points
 	#coarse_lamda_list = arange(min(lamda_fine),max(lamda_fine)+.0001, 50) # fixed spacing
-	#coarse_lamda_list = [600] # single point
+	dlamda = 100.0
+	coarse_lamda_list = arange( ceil(lamda_min/dlamda)*dlamda, floor(lamda_max/dlamda)*dlamda + dlamda/2.0, dlamda)
 	for lamda in coarse_lamda_list:
 		print('lambda:',lamda)
 
