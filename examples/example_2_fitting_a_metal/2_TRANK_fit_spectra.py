@@ -58,7 +58,7 @@ if __name__=='__main__':
 
 	delta_weight = scaled_weight_multiplier * scaled_weight_crossover/dlamda_max
 
-	if True: # turn this on to see the horrors of bandwidth edge effects on metals
+	if True: # turn off the Drude model (use_free_drude = False) to see the horrors of bandwidth edge effects on metals
 		fit_nk_f, lamda_list = error_adaptive_iterative_fit_spectra(
 					nk_f_guess = fit_nk_f,
 					spectrum_list_generator = spectrum_list_generator,
