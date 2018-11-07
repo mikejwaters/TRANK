@@ -56,7 +56,7 @@ tmm_spectra_dir = 'tmm_predicted_spectra/'
 ######
 # this ugly hack only defines the TR_pair_list_generator if the data actually exists
 from os.path import isfile
-if isfile(tmm_spectra_dir+ '%i_deg_spectra.txt'%angle_list[0]):
+if isfile(tmm_spectra_dir+ '%i_deg_spectra.txt'%angle_list[1]):
 
 	spectrum_function_list = []
 

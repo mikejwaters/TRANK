@@ -7,7 +7,7 @@ if __name__=='__main__':
 	make_plots = True
 	tmm_spectra_dir = 'tmm_predicted_spectra/'
 
-	noise = 0.5/100.0
+	noise = 2.0/100.0
 
 	dlamda_min = 1
 	lamda_min = 300

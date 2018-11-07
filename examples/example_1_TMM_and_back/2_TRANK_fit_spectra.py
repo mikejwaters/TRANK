@@ -92,7 +92,7 @@ if __name__=='__main__':
 				dlamda_min = dlamda_min,
 				dlamda_max = dlamda_max,
 				delta_weight = 0.1, tolerance = 1e-5, interpolation_type = 'cubic',
-				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.002,
+				adaptation_threshold_max = 0.01, adaptation_threshold_min = 0.2/100,
 				use_reducible_error = True,
 				method='least_squares',
 				KK_compliant = False,

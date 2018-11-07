@@ -17,6 +17,8 @@ def error_adaptive_iterative_fit_spectra(
 			reuse_mode = False,
 			KK_compliant = False,
 			use_free_drude  = False,
+			return_drude_params = False,
+			sigma_bar0_guess = 0.0, lamda_tau_guess = 0.0, epsilon_f1p_guess = 0.0,
 			interpolation_type = 'cubic',
 			no_negative = True,
 			interpolate_to_fine_grid_at_end = True,
@@ -77,7 +79,7 @@ def error_adaptive_iterative_fit_spectra(
 	print ('dlamda_max:  ' ,dlamda_max )
 	print ('dlamda_min:  ', dlamda_min )
 	print ('delta_weight:', delta_weight)
-	lamda_tau, sigma_bar0, epsilon_f1p  =  0.0, 0.0, 0.0
+	lamda_tau, sigma_bar0, epsilon_f1p  =  lamda_tau_guess,  sigma_bar0_guess, epsilon_f1p_guess
 
 	# literally jury rigging the conidtion so it starts the loop, ugly, but cleaner than the alternatives
 	num_new_points = len(lamda_list)
@@ -120,7 +122,7 @@ def error_adaptive_iterative_fit_spectra(
 		# now we use the inputs
 		t0 = time()
 		if use_free_drude:
-			inputs.update(dict(	sigma_bar0_guess = sigma_bar0, lamda_tau_guess = lamda_tau, epsilon_f1p_guess = epsilon_f1p))
+			inputs.update(dict( sigma_bar0_guess = sigma_bar0, lamda_tau_guess = lamda_tau, epsilon_f1p_guess = epsilon_f1p))
 			fit_nk_f, lamda_tau, sigma_bar0, epsilon_f1p  = fit_spectra_nk_sqr_drude_KK_compliant(**inputs)
 		else:
 			if KK_compliant:
@@ -284,8 +286,10 @@ def error_adaptive_iterative_fit_spectra(
 								parameter_list_generator = parameter_list_generator, threads = threads)
 			savetxt(data_directory+'fit_nk_fine.txt',array([lamda_fine, nk.real, nk.imag, array(rms_spectrum_fine)*100.0,  array(reducible_error_spectrum_fine)*100.0 ]).T)
 
-
-	return fit_nk_f, lamda_list
+	if use_free_drude and return_drude_params:
+		return fit_nk_f, lamda_list, lamda_tau, sigma_bar0, epsilon_f1p
+	else:
+		return fit_nk_f, lamda_list
 
 
 
@@ -305,6 +309,7 @@ def scan_for_scaled_weight_crossover(
 			use_free_drude = False,
 			interpolation_type = 'cubic',
 			no_negative = False,
+			target_ratio = 1.0,
 			threads = 0,
 			data_directory ='TRANK_weight_scan/', method = 'least_squares', verbose = True, write_to_file = True,
 			make_plots = True, show_plots = False, rms_file_format = 'rms_vs_weight.pdf' ):
@@ -382,13 +387,13 @@ def scan_for_scaled_weight_crossover(
 		print('--> reducible/irreducible ratio %f' % (ratio))
 
 		if len(log_data) > 1:
-			if log_data[-1][4] < 1.0 and log_data[-2][4] > 1.0:  # decreasing case
+			if log_data[-1][4] < target_ratio and log_data[-2][4] > target_ratio:  # decreasing case
 				cross_over_found = True
-			if log_data[-1][4] > 1.0 and log_data[-2][4] < 1.0:  # increasing case
+			if log_data[-1][4] > target_ratio and log_data[-2][4] < target_ratio:  # increasing case
 				cross_over_found = True
 
 		if cross_over_found == False: # actually don't need to do this check, but now we only update if we are still searching
-			if ratio > 1.0:
+			if ratio > target_ratio:
 				scaled_weight = scaled_weight* step_multiplier
 			else:
 				scaled_weight = scaled_weight/ step_multiplier
@@ -401,7 +406,7 @@ def scan_for_scaled_weight_crossover(
 	scaled_weight_data = log_data[0]
 	#simple linear interpolation is fast, and we dont have to worry about https://en.wikipedia.org/wiki/Runge%27s_phenomenon
 	ratio_slope = ( ratio_data[-1] - ratio_data[-2] )/ (scaled_weight_data[-1] - scaled_weight_data[-2])
-	scaled_weight_crossover = ( 1 - ratio_data[-2]) / ratio_slope + scaled_weight_data[-2]
+	scaled_weight_crossover = ( target_ratio - ratio_data[-2]) / ratio_slope + scaled_weight_data[-2]
 
 
 
@@ -419,7 +424,7 @@ def scan_for_scaled_weight_crossover(
 
 		figure()
 		plot(scaled_weight_data,ratio_data , marker = 'o' )
-		plot([scaled_weight_crossover],[1], marker = '+', label = 'scaled_weight_crossover')
+		plot([scaled_weight_crossover],[target_ratio], marker = '+', label = 'scaled_weight_crossover')
 		xlabel('scaled_weight')
 		ylabel('reducible error:irreducible error ratio')
 		legend()
