@@ -7,7 +7,11 @@ from numpy import sqrt, array
 def TMM_spectrum_wrapper(nk_fit, lamda, snell_angle_front, layer_index_of_fit,  nk_f_list,  thickness_list, coherency_list, tm_polarization_fraction, spectrum): #this is just a fancy wrapper for inc_tmm
 
 	nk_list = [ nk_f(lamda) for nk_f in nk_f_list]
-	nk_list[layer_index_of_fit] = nk_fit # overwrite input nk_f with the fit one. basically, it would make the code much uglier if I made an excption
+	try: # just try iterating through the layer_index_of_fit to see if its a list of just an int
+		for index in layer_index_of_fit:
+			nk_list[index] = nk_fit # overwrite input nk_f with the fit one.
+	except:
+		nk_list[layer_index_of_fit] = nk_fit
 
 	te_result = inc_tmm('s', nk_list, thickness_list, coherency_list, snell_angle_front, lamda)
 	tm_result = inc_tmm('p', nk_list, thickness_list, coherency_list, snell_angle_front, lamda)
