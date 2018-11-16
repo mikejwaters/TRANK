@@ -14,7 +14,7 @@ from .TRANK_lib import (fit_spectra_nk_sqr,
 						TMM_spectrum_wrapper,
 						TMM_spectra,
 						single_lamda_rms_error_map,
-						find_min_indices_2d_array )
+						find_min_indices_2d_array, epsilon_d_to_nk_function )
 
 from .KK_lib import (dual_grid_direct_KK_n_from_lamda_k, DKKT_n_from_lamda_k,
 					parallel_DKKT_n_from_lamda_k,
