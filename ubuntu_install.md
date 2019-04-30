@@ -1,12 +1,12 @@
 ## Step 0: to make our lives better, install virtual box guest additions
 ```
-    sudo apt-get install virtualbox-guest-utils  virtualbox-guest-x11 virtualbox-guest-dkms
+sudo apt-get install virtualbox-guest-utils  virtualbox-guest-x11 virtualbox-guest-dkms
 ```
 ## Step 1: install anaconda
 Download their install script
 ```
-    cd ~/Downloads
-    bash Anaconda3-*-Linux-x86_64.sh
+cd ~/Downloads
+bash Anaconda3-*-Linux-x86_64.sh
 ```
 This name might need to be changed if they change their file names. Just use the defaults they give you, and make sure to prepend your path when asked. Don't install microsoft visual studio, it's not needed
 
@@ -28,8 +28,8 @@ This name might need to be changed if they change their file names. Just use the
 ## Step 6: Open a new terminal to test if it's working and
 Change directory to the examples to run one, this will take some time and show you many plots
 ```
-    cd ~/my_python/TRANK/examples/example_1_TMM_and_back/
-    python 1_tmm_film_on_substrate.py && python 2_TRANK_fit_spectra.py  && python 3_compare_nk.py && python 4_compare_spectra.py
+cd ~/my_python/TRANK/examples/example_1_TMM_and_back/
+python 1_tmm_film_on_substrate.py && python 2_TRANK_fit_spectra.py  && python 3_compare_nk.py && python 4_compare_spectra.py
 ```
 
 
